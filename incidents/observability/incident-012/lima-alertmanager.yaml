@@ -35,83 +35,83 @@ provision:
       rm -rf alertmanager-${AM_VERSION}.linux-arm64*
       
       # Configure Prometheus with alert rules
-      cat > /etc/prometheus/prometheus.yml <<'EOF'
-global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: ['localhost:9093']
-
-rule_files:
-  - /etc/prometheus/alert.rules.yml
-
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-EOF
+      cat > /etc/prometheus/prometheus.yml << 'PROMEOF'
+      global:
+        scrape_interval: 5s
+        evaluation_interval: 5s
+      
+      alerting:
+        alertmanagers:
+          - static_configs:
+              - targets: ['localhost:9093']
+      
+      rule_files:
+        - /etc/prometheus/alert.rules.yml
+      
+      scrape_configs:
+        - job_name: 'prometheus'
+          static_configs:
+            - targets: ['localhost:9090']
+      PROMEOF
       
       # Create alert rules
-      cat > /etc/prometheus/alert.rules.yml <<'EOF'
-groups:
-  - name: infrastructure
-    interval: 5s
-    rules:
-      - alert: DatabaseDiskFull
-        expr: up{job="prometheus"} == 1
-        for: 10s
-        labels:
-          severity: critical
-        annotations:
-          summary: "Database disk is full"
-EOF
+      cat > /etc/prometheus/alert.rules.yml << 'RULEEOF'
+      groups:
+        - name: infrastructure
+          interval: 5s
+          rules:
+            - alert: DatabaseDiskFull
+              expr: up{job="prometheus"} == 1
+              for: 10s
+              labels:
+                severity: critical
+              annotations:
+                summary: "Database disk is full"
+      RULEEOF
       
       # Configure Alertmanager
-      cat > /etc/alertmanager/alertmanager.yml <<'EOF'
-global:
-  resolve_timeout: 5m
-
-route:
-  receiver: 'default'
-  group_wait: 1s
-  group_interval: 1s
-  repeat_interval: 5m
-
-receivers:
-  - name: 'default'
-EOF
+      cat > /etc/alertmanager/alertmanager.yml << 'AMEOF'
+      global:
+        resolve_timeout: 5m
+      
+      route:
+        receiver: 'default'
+        group_wait: 1s
+        group_interval: 1s
+        repeat_interval: 5m
+      
+      receivers:
+        - name: 'default'
+      AMEOF
       
       # Create systemd services
-      cat > /etc/systemd/system/prometheus.service <<'EOF'
-[Unit]
-Description=Prometheus
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      cat > /etc/systemd/system/prometheus.service << 'PROMSVC'
+      [Unit]
+      Description=Prometheus
+      After=network.target
       
-      cat > /etc/systemd/system/alertmanager.service <<'EOF'
-[Unit]
-Description=Alertmanager
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
+      Restart=always
+      
+      [Install]
+      WantedBy=multi-user.target
+      PROMSVC
+      
+      cat > /etc/systemd/system/alertmanager.service << 'AMSVC'
+      [Unit]
+      Description=Alertmanager
+      After=network.target
+      
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+      Restart=always
+      
+      [Install]
+      WantedBy=multi-user.target
+      AMSVC
       
       systemctl daemon-reload
       systemctl enable prometheus alertmanager

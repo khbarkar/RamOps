@@ -4,13 +4,7 @@ images:
     arch: "aarch64"
 cpus: 1
 memory: "1GiB"
-disk: "10GiB"
-
-mounts:
-  - location: "~"
-    writable: false
-  - location: "/tmp/lima"
-    writable: true
+disk: "5GiB"
 
 provision:
   - mode: system
@@ -21,57 +15,47 @@ provision:
       apt-get update
       apt-get install -y python3 lsof
       
-      # Create separate filesystem for logs (simulating /var/log on separate partition)
-      mkdir -p /mnt/logs
-      dd if=/dev/zero of=/opt/logs.img bs=1M count=2048
-      mkfs.ext4 -F /opt/logs.img
-      mount -o loop /opt/logs.img /mnt/logs
-      echo '/opt/logs.img /mnt/logs ext4 loop 0 0' >> /etc/fstab
+      mkdir -p /var/log/webapp
       
-      mkdir -p /mnt/logs/webapp
-      chown -R ubuntu:ubuntu /mnt/logs/webapp
+      LIMA_USER=$(stat -c '%U' /home/*)
       
-      # Create app directory on main filesystem
-      mkdir -p /opt/webapp
-      chown -R ubuntu:ubuntu /opt/webapp
-      
-      cat > /opt/webapp/app.py << 'EOF'
+      cat > /opt/webapp.py << 'EOF'
       import time
       import random
       
-      # Open the log file that will be rotated
-      log_file = open('/mnt/logs/webapp/app.log', 'a')
+      log_file = open('/var/log/webapp/app.log', 'a')
       
       while True:
           log_file.write(f"{time.time()} - Request processed - Status: {random.choice([200, 404, 500])}\n")
           log_file.flush()
-          time.sleep(0.01)
+          time.sleep(0.1)
       EOF
       
-      printf '%s\n' '[Unit]' 'Description=Web App Logger' 'After=network.target' '' '[Service]' 'Type=simple' 'User=ubuntu' 'WorkingDirectory=/opt/webapp' 'ExecStart=/usr/bin/python3 /opt/webapp/app.py' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/webapp.service
+      printf '%s\n' '[Unit]' 'Description=Web App Logger' 'After=network.target' '' '[Service]' 'Type=simple' "User=$LIMA_USER" 'ExecStart=/usr/bin/python3 /opt/webapp.py' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/webapp.service
       
       systemctl daemon-reload
       systemctl enable webapp.service
       
-      # Create and fill the log file BEFORE starting the app
-      dd if=/dev/zero of=/mnt/logs/webapp/app.log bs=1M count=1950 2>/dev/null || dd if=/dev/zero of=/mnt/logs/webapp/app.log bs=1M count=1900 2>/dev/null
-      chown ubuntu:ubuntu /mnt/logs/webapp/app.log
+      # Create a 500MB log file for the app
+      dd if=/dev/zero of=/var/log/webapp/app.log bs=1M count=500 2>/dev/null
       
-      # Now start the app (it will open the large file)
+      # Start the app (it will open the file)
       systemctl start webapp.service
       
-      sleep 5
+      sleep 3
       
-      # Simulate log rotation - move the file the app has open
-      mv /mnt/logs/webapp/app.log /mnt/logs/webapp/app-old-$(date +%s).log
-      touch /mnt/logs/webapp/app.log
-      chown ubuntu:ubuntu /mnt/logs/webapp/app.log
+      # Fill the rest of the disk
+      dd if=/dev/zero of=/var/log/filler.dat bs=1M count=2500 2>/dev/null || true
+      
+      # Rotate the app's log (app still has it open)
+      mv /var/log/webapp/app.log /var/log/webapp/app-old-$(date +%s).log
+      touch /var/log/webapp/app.log
       
       sleep 2
       
-      # Delete old logs (but space not freed because app still has it open)
-      rm /mnt/logs/webapp/app-old-*.log
+      # Delete the old log (but app still has it open)
+      rm /var/log/webapp/app-old-*.log
       
-      echo "Disk space issue created - webapp has deleted file open"
+      echo "Disk nearly full - webapp has deleted 500MB file open"
 
 portForwards: []

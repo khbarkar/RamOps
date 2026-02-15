@@ -6,7 +6,7 @@
 
 ## Scenario
 
-Alerts fire at 3am: disk usage on the log filesystem is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were "deleted" hours ago. But the disk space was never freed. Running df shows the /mnt/logs filesystem is nearly full, but du shows plenty of space should be available.
+Alerts fire at 3am: disk usage on the server is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were "deleted" hours ago. But the disk space was never freed. Running df shows the disk is nearly full, but du shows plenty of space should be available.
 
 Something is holding onto disk space that should have been reclaimed.
 
@@ -22,10 +22,7 @@ Run setup from the TUI or:
 ./setup-lima.sh
 ```
 
-This creates a VM with a web server writing logs. The log rotation system has a bug that's preventing disk space from being freed. The setup follows best practices:
-- Application runs as non-root user (ubuntu)
-- Logs are on a separate filesystem (/mnt/logs)
-- Application code is in /opt/webapp
+This creates a VM with a web server writing logs. The log rotation system has a bug that's preventing disk space from being freed.
 
 ## Your Task
 
