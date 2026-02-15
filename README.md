@@ -10,24 +10,39 @@ Incident simulation and training scenarios for Kubernetes and cloud infrastructu
 
 | Directory | Description |
 |-----------|-------------|
-| `broken-cluster` | Kubernetes cluster failures: crashloops, node issues, control plane outages |
-| `degraded-platform` | Performance degradation: memory leaks, CPU runaways, IOPS throttling |
-| `oom` | Out-of-memory and resource exhaustion |
-| `harden-security` | Security breach simulations: stolen creds, RBAC misconfig, pod breakouts |
-| `find-the-issue-in-grafana` | Observability challenges: alert storms, missing metrics, SLO breaches |
-| `wrong-alarm` | False positive alert scenarios |
-| `bad-ai-advice` | Scenarios where AI-generated suggestions lead to bad incident response |
+| `kubernetes/single-pod-crashloop` | A pod is stuck in CrashLoopBackOff — diagnose and fix it |
+| `kubernetes/node-not-ready` | A cluster node has gone NotReady — find it and bring it back |
+| `kafka/disk-bound-brokers` | Kafka brokers bottlenecked by slow disk I/O (VMs + Grafana) |
+| `kafka/network-bound-brokers` | Kafka brokers bottlenecked by network bandwidth cap (VMs + Grafana) |
+| `deployment/hard-link-trap` | Config rollback fails due to hard link inode semantics (VMs) |
 
 ## Getting Started
 
-Each scenario is self-contained with its own setup, verification, and teardown scripts. You need [Kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/), and Docker.
+Each scenario is self-contained with its own setup, verification, and teardown scripts.
+
+**Prerequisites:**
+- **Kubernetes scenarios**: [Kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/), Docker
+- **VM-based scenarios** (Kafka, Deployment, Terraform):
+  - [Vagrant](https://www.vagrantup.com/downloads) >= 2.0
+  - **Apple Silicon (ARM) Macs - Choose ONE:**
+    - **QEMU (FREE, recommended):**
+      ```bash
+      brew install qemu
+      vagrant plugin install vagrant-qemu
+      ```
+    - **VMware Fusion** (free, requires Broadcom account)
+    - **Parallels Desktop** (14-day trial)
+  - **Intel Macs / Linux / Windows:**
+    - [VirtualBox](https://www.virtualbox.org/) >= 6.0
+  - Python 3 with `kafka-python` (for Kafka scenarios only)
+
 
 ```bash
-cd broken-cluster/single-pod-crashloop
-./setup.sh      # creates a Kind cluster and deploys the broken workload
+cd kubernetes/single-pod-crashloop
+./setup.sh      # creates infrastructure and deploys the broken scenario
 # ... debug and fix ...
 ./verify.sh     # checks if your fix works
-./teardown.sh   # cleans up the cluster
+./teardown.sh   # cleans up everything
 ```
 
 ## Why "Hrutur"?
