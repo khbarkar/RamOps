@@ -1,0 +1,51 @@
+Vagrant.configure("2") do |config|
+  # Use Ubuntu for broader compatibility
+  config.vm.box = "bento/ubuntu-22.04"
+
+  config.vm.hostname = "terraform-drift"
+
+  # Provider-specific configurations
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+    vb.cpus = 2
+  end
+
+  config.vm.provider "vmware_desktop" do |v|
+    v.vmx["memsize"] = "2048"
+    v.vmx["numvcpus"] = "2"
+  end
+
+  config.vm.provider "parallels" do |prl|
+    prl.memory = 2048
+    prl.cpus = 2
+  end
+
+  config.vm.provider "qemu" do |qe|
+    qe.memory = "2048"
+    qe.cpus = 2
+    qe.ssh_port = 50222
+    qe.extra_qemu_args = %w(-netdev user,id=net0,hostfwd=tcp::50222-:22 -device virtio-net-pci,netdev=net0)
+  end
+
+  # Install Terraform
+  config.vm.provision "shell", inline: <<-SHELL
+    set -e
+
+    # Install dependencies
+    apt-get update
+    apt-get install -y wget unzip
+
+    # Install Terraform
+    TERRAFORM_VERSION="1.7.0"
+    wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    unzip -q terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    mv terraform /usr/local/bin/
+    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+    # Create directory for simulated managed resources
+    mkdir -p /tmp/managed-resources
+    chown vagrant:vagrant /tmp/managed-resources
+
+    echo "Terraform installed: $(terraform version)"
+  SHELL
+end

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" alt="RamOps" width="400">
+  <img src="docs/img/logo.png" alt="RamOps" width="400">
 </p>
 
-# Ram Ops ( hrutur ) 
+# Ram Ops 
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
 
@@ -17,6 +17,11 @@ Incident simulation and training scenarios for Kubernetes and cloud infrastructu
 | `kafka/incident-005` | Kafka cluster experiencing high latency and growing consumer lag (VMs + Grafana) | [RCA](kafka/incident-005/root-cause-analysis.md) |
 | `kafka/incident-006` | Kafka performance degraded despite available CPU and disk (VMs + Grafana) | [RCA](kafka/incident-006/root-cause-analysis.md) |
 | `deployment/incident-007` | Config rollback attempted but application still broken (VMs) | [RCA](deployment/incident-007/root-cause-analysis.md) |
+| `kubernetes/incident-008` | API gateway HTTPS connections failing with certificate errors | [RCA](kubernetes/incident-008/root-cause-analysis.md) |
+| `kubernetes/incident-009` | Critical microservice keeps dying and restarting every few minutes | [RCA](kubernetes/incident-009/root-cause-analysis.md) |
+| `kubernetes/incident-010` | Security audit flagged exposed credentials in cluster configuration | [RCA](kubernetes/incident-010/root-cause-analysis.md) |
+| `terraform/incident-011` | Infrastructure changes not matching Terraform configuration (VMs) | [RCA](terraform/incident-011/root-cause-analysis.md) |
+| `observability/incident-012` | Alert storm: 15+ alerts firing simultaneously at 3am (VMs) | [RCA](observability/incident-012/root-cause-analysis.md) |
 
 ## Getting Started
 

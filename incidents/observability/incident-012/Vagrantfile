@@ -1,0 +1,282 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-22.04"
+  config.vm.hostname = "alertmanager"
+
+  # Forward ports for Prometheus and Alertmanager
+  config.vm.network "forwarded_port", guest: 9090, host: 9090  # Prometheus
+  config.vm.network "forwarded_port", guest: 9093, host: 9093  # Alertmanager
+
+  # Provider-specific configurations
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "4096"
+    vb.cpus = 2
+  end
+
+  config.vm.provider "vmware_desktop" do |v|
+    v.vmx["memsize"] = "4096"
+    v.vmx["numvcpus"] = "2"
+  end
+
+  config.vm.provider "parallels" do |prl|
+    prl.memory = 4096
+    prl.cpus = 2
+  end
+
+  config.vm.provider "qemu" do |qe|
+    qe.memory = "4096"
+    qe.cpus = 2
+    qe.ssh_port = 50222
+    qe.extra_qemu_args = %w(-netdev user,id=net0,hostfwd=tcp::50222-:22,hostfwd=tcp::9090-:9090,hostfwd=tcp::9093-:9093 -device virtio-net-pci,netdev=net0)
+  end
+
+  # Install Prometheus, Alertmanager, and create alert rules
+  config.vm.provision "shell", inline: <<-SHELL
+    set -e
+
+    echo "Installing dependencies..."
+    apt-get update
+    apt-get install -y wget curl postgresql
+
+    # Install Prometheus
+    echo "Installing Prometheus..."
+    PROM_VERSION="2.48.0"
+    wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz
+    tar xzf prometheus-${PROM_VERSION}.linux-amd64.tar.gz
+    cp prometheus-${PROM_VERSION}.linux-amd64/prometheus /usr/local/bin/
+    cp prometheus-${PROM_VERSION}.linux-amd64/promtool /usr/local/bin/
+    mkdir -p /etc/prometheus /var/lib/prometheus
+    rm -rf prometheus-${PROM_VERSION}.linux-amd64*
+
+    # Install Alertmanager
+    echo "Installing Alertmanager..."
+    AM_VERSION="0.26.0"
+    wget -q https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-amd64.tar.gz
+    tar xzf alertmanager-${AM_VERSION}.linux-amd64.tar.gz
+    cp alertmanager-${AM_VERSION}.linux-amd64/alertmanager /usr/local/bin/
+    cp alertmanager-${AM_VERSION}.linux-amd64/amtool /usr/local/bin/
+    mkdir -p /etc/alertmanager /var/lib/alertmanager
+    rm -rf alertmanager-${AM_VERSION}.linux-amd64*
+
+    # Configure Prometheus
+    cat > /etc/prometheus/prometheus.yml <<'EOF'
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'database'
+    static_configs:
+      - targets: ['localhost:5432']
+EOF
+
+    # Create alert rules that will create an alert storm
+    cat > /etc/prometheus/alert.rules.yml <<'EOF'
+groups:
+  - name: infrastructure
+    interval: 5s
+    rules:
+      # ROOT CAUSE ALERT
+      - alert: DatabaseDiskFull
+        expr: (100 - ((node_filesystem_avail_bytes{mountpoint="/var/lib/postgresql/data"} * 100) / node_filesystem_size_bytes{mountpoint="/var/lib/postgresql/data"})) > 90
+        for: 10s
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Database disk is full"
+          description: "Disk usage on /var/lib/postgresql/data is above 90%"
+
+      # SYMPTOM ALERTS (cascading from root cause)
+      - alert: DatabaseConnectionFailed
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Cannot connect to database"
+
+      - alert: HighDatabaseLatency
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database queries are slow"
+
+      - alert: APIErrorRateHigh
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API error rate is elevated"
+
+      - alert: APILatencyHigh
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "API response time is high"
+
+      - alert: CacheMissRateHigh
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Cache hit rate dropped"
+
+      - alert: QueueBacklogGrowing
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Message queue backlog is growing"
+
+      - alert: ServiceHealthCheckFailing
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          component: healthcheck
+        annotations:
+          summary: "Service health check is failing"
+
+      - alert: LogErrorsIncreased
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: logging
+        annotations:
+          summary: "Error logs are increasing"
+
+      - alert: UserAuthenticationFailing
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          component: auth
+        annotations:
+          summary: "User authentication failures"
+
+      - alert: SessionStoreUnavailable
+        expr: up{job="database"} == 0
+        for: 10s
+        labels:
+          severity: warning
+          component: sessions
+        annotations:
+          summary: "Session store is unavailable"
+EOF
+
+    # Configure Alertmanager (without grouping - this is what needs to be fixed)
+    cat > /etc/alertmanager/alertmanager.yml <<'EOF'
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'default'
+  # BAD: No grouping configured - each alert fires separately
+  # This creates alert storm
+  group_wait: 1s
+  group_interval: 1s
+  repeat_interval: 5m
+
+receivers:
+  - name: 'default'
+    # In production, this would be PagerDuty, Slack, email, etc.
+EOF
+
+    # Create systemd services
+    cat > /etc/systemd/system/prometheus.service <<'EOF'
+[Unit]
+Description=Prometheus
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    cat > /etc/systemd/system/alertmanager.service <<'EOF'
+[Unit]
+Description=Alertmanager
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Install node_exporter for disk metrics
+    echo "Installing node_exporter..."
+    NE_VERSION="1.7.0"
+    wget -q https://github.com/prometheus/node_exporter/releases/download/v${NE_VERSION}/node_exporter-${NE_VERSION}.linux-amd64.tar.gz
+    tar xzf node_exporter-${NE_VERSION}.linux-amd64.tar.gz
+    cp node_exporter-${NE_VERSION}.linux-amd64/node_exporter /usr/local/bin/
+    rm -rf node_exporter-${NE_VERSION}.linux-amd64*
+
+    cat > /etc/systemd/system/node-exporter.service <<'EOF'
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/node_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Start services
+    systemctl daemon-reload
+    systemctl enable prometheus alertmanager node-exporter
+    systemctl start prometheus alertmanager node-exporter
+
+    # Create PostgreSQL data directory with limited space
+    mkdir -p /var/lib/postgresql/data
+    chown -R postgres:postgres /var/lib/postgresql
+
+    echo "Setup complete!"
+    echo "Prometheus: http://localhost:9090"
+    echo "Alertmanager: http://localhost:9093"
+  SHELL
+end

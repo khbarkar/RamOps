@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processor
+  namespace: default
+  labels:
+    app: data-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-processor
+  template:
+    metadata:
+      labels:
+        app: data-processor
+    spec:
+      containers:
+        - name: processor
+          image: python:3.11-slim
+          command:
+            - python3
+            - -c
+            - |
+              import time
+              import random
+
+              # This is the problematic code - it leaks memory!
+              leaked_data = []
+
+              print("Data processor started...")
+              print("Processing events...")
+
+              counter = 0
+              while True:
+                  # Simulate processing events
+                  # BUG: Data is appended to the list but never cleared
+                  # This causes unbounded memory growth
+                  event_data = {
+                      'id': counter,
+                      'timestamp': time.time(),
+                      'payload': 'x' * 10000  # 10KB per event
+                  }
+                  leaked_data.append(event_data)
+
+                  counter += 1
+
+                  if counter % 100 == 0:
+                      print(f"Processed {counter} events, leaked_data size: {len(leaked_data)}")
+
+                  time.sleep(0.1)  # Process 10 events per second
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"  # Will be OOMKilled when memory exceeds this
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-processor
+  namespace: default
+spec:
+  selector:
+    app: data-processor
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
