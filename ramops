@@ -126,16 +126,16 @@ do_update() {
 
 # Get all incidents with full info
 get_all_incidents() {
-  echo "001:kubernetes:Pod crash-looping:Beginner"
+  echo "001:kubernetes:Pod crashloop:Beginner"
   echo "002:kubernetes:Node NotReady:Beginner"
   echo "003:kubernetes:DNS outage:Intermediate"
   echo "004:kubernetes:Storage full:Beginner-Intermediate"
-  echo "005:kafka:Disk-bound:Intermediate"
-  echo "006:kafka:Network-bound:Intermediate-Advanced"
+  echo "005:kafka:Disk bound:Intermediate"
+  echo "006:kafka:Network bound:Intermediate-Advanced"
   echo "007:deployment:Hard link trap:Intermediate-Advanced"
-  echo "008:kubernetes:HTTPS cert errors:Intermediate"
+  echo "008:kubernetes:HTTPS cert error:Intermediate"
   echo "009:kubernetes:Memory leak:Intermediate"
-  echo "010:kubernetes:Exposed credentials:Beginner-Intermediate"
+  echo "010:kubernetes:Exposed creds:Beginner-Intermediate"
   echo "011:terraform:Drift detection:Intermediate"
   echo "012:observability:Alert storm:Intermediate-Advanced"
 }
