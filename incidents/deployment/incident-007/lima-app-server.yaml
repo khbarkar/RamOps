@@ -11,31 +11,21 @@ provision:
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      
       hostnamectl set-hostname app-server
       apt-get update
-      apt-get install -y python3 python3-pip
-      
-      mkdir -p /opt/app/{releases,current}
-      
-      cat > /opt/app/app.py << 'APPEOF'
-      from http.server import HTTPServer, BaseHTTPRequestHandler
-      import json
-      
-      class Handler(BaseHTTPRequestHandler):
-          def do_GET(self):
-              self.send_response(200)
-              self.send_header('Content-type', 'application/json')
-              self.end_headers()
-              self.wfile.write(json.dumps({"status": "ok", "version": "1.0"}).encode())
-      
-      HTTPServer(('', 8000), Handler).serve_forever()
-      APPEOF
-      
+      apt-get install -y python3
+      mkdir -p /opt/app/releases /opt/app/current
+      echo 'from http.server import HTTPServer, BaseHTTPRequestHandler' > /opt/app/app.py
+      echo 'import json' >> /opt/app/app.py
+      echo 'class Handler(BaseHTTPRequestHandler):' >> /opt/app/app.py
+      echo '    def do_GET(self):' >> /opt/app/app.py
+      echo '        self.send_response(200)' >> /opt/app/app.py
+      echo '        self.send_header("Content-type", "application/json")' >> /opt/app/app.py
+      echo '        self.end_headers()' >> /opt/app/app.py
+      echo '        self.wfile.write(json.dumps({"status": "ok", "version": "1.0"}).encode())' >> /opt/app/app.py
+      echo 'HTTPServer(("", 8000), Handler).serve_forever()' >> /opt/app/app.py
       printf '%s\n' '[Unit]' 'Description=Sample App' 'After=network.target' '' '[Service]' 'Type=simple' 'WorkingDirectory=/opt/app/current' 'ExecStart=/usr/bin/python3 /opt/app/current/app.py' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/app.service
-      
       systemctl daemon-reload
-      
       echo "App server provisioned"
 
 portForwards:
