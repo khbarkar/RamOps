@@ -13,22 +13,34 @@
   {
     "id": "incidents/advanced/incident-053",
     "title": "Incident 053",
-    "description": "Your etcd cluster is behaving erratically. Some API requests succeed, others fail. Different nodes report different cluster states. Your monitoring shows multiple leaders elected simultaneously. The c...",
+    "description": "etcd cluster in split-brain state with multiple leaders elected, causing data inconsistency and conflicting writes",
     "difficulty": "Expert",
-    "skills": [],
+    "skills": [
+      "Distributed Systems",
+      "Raft",
+      "etcd"
+    ],
     "technologies": [
-      "Advanced"
+      "Kubernetes",
+      "etcd",
+      "Distributed Systems"
     ],
     "path": "incidents/advanced/incident-053"
   },
   {
     "id": "incidents/advanced/incident-054",
     "title": "Incident 054",
-    "description": "Your security team detected unusual CPU cache behavior on a multi-tenant Kubernetes node. A container is making millions of memory accesses with suspicious timing patterns. Analysis suggests a Spectre...",
+    "description": "Container exploiting CPU cache timing to leak secrets from adjacent containers through Spectre-style side-channel attack",
     "difficulty": "Expert",
-    "skills": [],
+    "skills": [
+      "CPU Architecture",
+      "Security",
+      "Side-Channel Attacks"
+    ],
     "technologies": [
-      "Advanced"
+      "Kubernetes",
+      "Hardware Security",
+      "Spectre"
     ],
     "path": "incidents/advanced/incident-054"
   },
