@@ -63,3 +63,9 @@ cd kubernetes/incident-001
 ./teardown.sh   # cleans up everything
 ```
 
+---
+
+<p align="center">
+  <sub>If you find this project helpful, consider <a href="https://www.buymeacoffee.com/khbarkar">buying me a coffee</a> ☕</sub>
+</p>
+
