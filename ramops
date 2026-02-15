@@ -97,6 +97,51 @@ check_deps() {
         ;;
     esac
   fi
+  
+  # Check for socket_vmnet if Lima is installed
+  if command -v limactl &> /dev/null; then
+    if [ ! -f "/opt/socket_vmnet/bin/socket_vmnet" ]; then
+      clear
+      show_logo
+      echo -e "${ORANGE}Lima requires socket_vmnet for multi-VM networking.${NC}"
+      echo ""
+      echo -e "${GRAY}Would you like to install socket_vmnet? (y/n)${NC}"
+      read -rsn1 choice
+      
+      case $choice in
+        'y'|'Y')
+          echo ""
+          echo -e "${ORANGE}Installing socket_vmnet...${NC}"
+          if command -v brew &> /dev/null; then
+            brew install socket_vmnet
+            echo ""
+            echo -e "${ORANGE}Starting socket_vmnet service...${NC}"
+            sudo brew services start socket_vmnet
+            echo ""
+            echo -e "${ORANGE}socket_vmnet installed! Press any key to continue...${NC}"
+            read -n 1 -s
+          else
+            echo ""
+            echo -e "${ORANGE}Homebrew not found. Install manually:${NC}"
+            echo "  brew install socket_vmnet"
+            echo "  sudo brew services start socket_vmnet"
+            exit 1
+          fi
+          ;;
+        *)
+          echo ""
+          echo -e "${ORANGE}Note: Multi-VM scenarios may not work without socket_vmnet.${NC}"
+          echo ""
+          echo "Install later with:"
+          echo "  brew install socket_vmnet"
+          echo "  sudo brew services start socket_vmnet"
+          echo ""
+          echo -e "${GRAY}Press any key to continue...${NC}"
+          read -n 1 -s
+          ;;
+      esac
+    fi
+  fi
 }
 
 # Clone or update repo

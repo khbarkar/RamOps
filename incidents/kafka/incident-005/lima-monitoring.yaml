@@ -1,4 +1,3 @@
-name: monitoring
 arch: "aarch64"
 images:
   - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
@@ -6,13 +5,6 @@ images:
 cpus: 2
 memory: "2GiB"
 disk: "20GiB"
-
-networks:
-  - lima: shared
-
-mounts:
-  - location: "~"
-    writable: false
 
 provision:
   - mode: system
@@ -48,7 +40,7 @@ provision:
       mkdir -p /etc/prometheus /var/lib/prometheus
       rm -rf prometheus-${PROM_VERSION}.linux-arm64*
       
-      printf '%s\n' 'global:' '  scrape_interval: 15s' '' 'scrape_configs:' "  - job_name: 'kafka'" '    static_configs:' "      - targets: ['192.168.5.11:9092', '192.168.5.12:9092', '192.168.5.13:9092']" > /etc/prometheus/prometheus.yml
+      printf '%s\n' 'global:' '  scrape_interval: 15s' '' 'scrape_configs:' "  - job_name: 'kafka'" '    static_configs:' "      - targets: ['localhost:9092']" > /etc/prometheus/prometheus.yml
       
       printf '%s\n' '[Unit]' 'Description=Prometheus' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/prometheus.service
       
