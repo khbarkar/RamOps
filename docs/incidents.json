@@ -183,7 +183,7 @@
   {
     "id": "incidents/kubernetes/incident-001",
     "title": "Incident 001",
-    "description": "Users reporting site is down due to pods stuck in CrashLoopBackOff from misconfigured liveness probe",
+    "description": "Users reporting site is down - pods stuck in CrashLoopBackOff and constantly restarting",
     "difficulty": "Beginner",
     "skills": [
       "Debugging",
