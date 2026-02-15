@@ -52,12 +52,15 @@ provision:
       
       systemctl daemon-reload
       systemctl enable webapp.service
+      
+      # Create and fill the log file BEFORE starting the app
+      dd if=/dev/zero of=/mnt/logs/webapp/app.log bs=1M count=1950 2>/dev/null || dd if=/dev/zero of=/mnt/logs/webapp/app.log bs=1M count=1900 2>/dev/null
+      chown ubuntu:ubuntu /mnt/logs/webapp/app.log
+      
+      # Now start the app (it will open the large file)
       systemctl start webapp.service
       
       sleep 5
-      
-      # Fill the log file that the app has open (fill to 100%)
-      dd if=/dev/zero of=/mnt/logs/webapp/app.log bs=1M count=1950 2>/dev/null || true
       
       # Simulate log rotation - move the file the app has open
       mv /mnt/logs/webapp/app.log /mnt/logs/webapp/app-old-$(date +%s).log
