@@ -25,7 +25,7 @@ limactl start --tty=false "$SCENARIO_DIR/lima-kafka2.yaml" &
 limactl start --tty=false "$SCENARIO_DIR/lima-kafka3.yaml" &
 wait
 
-limactl shell monitoring sudo systemctl start zookeeper
+limactl shell lima-monitoring sudo systemctl start zookeeper
 sleep 5
 limactl shell kafka1 sudo systemctl start kafka &
 limactl shell kafka2 sudo systemctl start kafka &

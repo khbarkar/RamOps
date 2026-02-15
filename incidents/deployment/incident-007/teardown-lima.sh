@@ -2,6 +2,6 @@
 set -euo pipefail
 
 echo "=== Cleaning up Lima VM ==="
-limactl stop app-server 2>/dev/null || true
-limactl delete app-server 2>/dev/null || true
+limactl stop lima-app-server 2>/dev/null || true
+limactl delete lima-app-server 2>/dev/null || true
 echo "Cleanup complete!"

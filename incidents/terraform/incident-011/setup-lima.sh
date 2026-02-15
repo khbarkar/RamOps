@@ -12,8 +12,8 @@ if ! command -v limactl &> /dev/null; then
 fi
 
 echo "Cleaning up previous run..."
-limactl stop terraform-drift 2>/dev/null || true
-limactl delete terraform-drift 2>/dev/null || true
+limactl stop lima-terraform-drift 2>/dev/null || true
+limactl delete lima-terraform-drift 2>/dev/null || true
 
 echo ""
 echo "Starting VM with Lima..."

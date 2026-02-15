@@ -12,8 +12,8 @@ if ! command -v limactl &> /dev/null; then
 fi
 
 echo "Cleaning up previous run..."
-limactl stop app-server 2>/dev/null || true
-limactl delete app-server 2>/dev/null || true
+limactl stop lima-app-server 2>/dev/null || true
+limactl delete lima-app-server 2>/dev/null || true
 
 echo ""
 echo "Starting VM with Lima..."

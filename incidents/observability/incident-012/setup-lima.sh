@@ -12,8 +12,8 @@ if ! command -v limactl &> /dev/null; then
 fi
 
 echo "Cleaning up previous run..."
-limactl stop alertmanager 2>/dev/null || true
-limactl delete alertmanager 2>/dev/null || true
+limactl stop lima-alertmanager 2>/dev/null || true
+limactl delete lima-alertmanager 2>/dev/null || true
 
 echo ""
 echo "Starting VM with Lima..."
