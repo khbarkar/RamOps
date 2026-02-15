@@ -139,6 +139,7 @@ get_all_incidents() {
   echo "012:observability:Alert storm:Intermediate-Advanced"
   echo "013:sysadmin:Vanishing logs:Beginner-Intermediate"
   echo "014:sysadmin:Zombie apocalypse:Intermediate-Advanced"
+  echo "019:security:Secrets in layers:Intermediate"
 }
 
 # Get incidents by difficulty
@@ -218,7 +219,7 @@ draw_technology_menu() {
   echo -e "${ORANGE}${BOLD}SELECT CATEGORY${NC}"
   echo ""
   
-  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "Sysadmin")
+  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "Sysadmin" "Security")
   
   for i in "${!technologies[@]}"; do
     if [ $i -eq $selected ]; then
@@ -610,7 +611,7 @@ difficulty_menu() {
 # Technology menu loop
 technology_menu() {
   local selected=0
-  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sysadmin")
+  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sysadmin" "security")
   local max_items=$((${#technologies[@]} - 1))
   
   while true; do

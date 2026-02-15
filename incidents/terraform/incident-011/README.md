@@ -12,17 +12,7 @@ Your task is to detect the drift, understand what changed, and restore infrastru
 
 ## Prerequisites
 
-- [Vagrant](https://www.vagrantup.com/downloads) >= 2.0
-- **Apple Silicon (ARM) Macs - Choose ONE:**
-  - **QEMU (FREE, recommended):**
-    ```bash
-    brew install qemu
-    vagrant plugin install vagrant-qemu
-    ```
-  - **VMware Fusion** (free for personal use)
-  - **Parallels Desktop** (14-day trial)
-- **Intel Macs / Linux / Windows:**
-  - [VirtualBox](https://www.virtualbox.org/) >= 6.0
+- [Lima](https://lima-vm.io/) (installed via Homebrew)
 - Terraform will be installed automatically in the VM
 
 ## What You'll Learn
@@ -35,47 +25,37 @@ Your task is to detect the drift, understand what changed, and restore infrastru
 
 ## Setup
 
+Run setup from the TUI or:
 ```bash
-./setup.sh
+./setup-lima.sh
 ```
 
 This creates a VM with Terraform installed, deploys infrastructure, and then simulates manual changes to create drift.
 
 ## Your Task
 
-1. SSH into the VM: `vagrant ssh`
-2. Navigate to the Terraform directory: `cd /vagrant/tf`
+1. SSH into the VM: `limactl shell lima-terraform-drift`
+2. Navigate to the Terraform directory: `cd /opt/terraform`
 3. Detect drift using Terraform commands
 4. Identify what changed manually
 5. Restore infrastructure to match Terraform configuration
-6. Run `./verify.sh` to confirm drift is resolved
+6. Run verify from the TUI to confirm drift is resolved
 
 ## Hints
 
-<details>
-<summary>Hint 1</summary>
-Use <code>terraform plan</code> to detect differences between the current state and actual infrastructure.
-</details>
+Hint 1: Use terraform plan to detect differences between the current state and actual infrastructure.
 
-<details>
-<summary>Hint 2</summary>
-Check the files in <code>/tmp/managed-resources/</code> to see what the infrastructure currently looks like.
-</details>
+Hint 2: Check the files in /tmp/managed-resources/ to see what the infrastructure currently looks like.
 
-<details>
-<summary>Hint 3</summary>
-Someone manually modified files that Terraform manages. You need to reapply the Terraform configuration.
-</details>
+Hint 3: Someone manually modified files that Terraform manages. You need to reapply the Terraform configuration.
 
-<details>
-<summary>Hint 4</summary>
-Use <code>terraform apply</code> to restore infrastructure to the desired state defined in your .tf files.
-</details>
+Hint 4: Use terraform apply to restore infrastructure to the desired state defined in your .tf files.
 
 ## Cleanup
 
+Run teardown from the TUI or:
 ```bash
-./teardown.sh
+./teardown-lima.sh
 ```
 
 ## Production Parallels

@@ -27,3 +27,40 @@ provision:
       chown ubuntu:ubuntu /tmp/managed-resources
       
       echo "Terraform installed: $(terraform version)"
+      
+      mkdir -p /opt/terraform /tmp/managed-resources
+      chown -R ubuntu:ubuntu /opt/terraform /tmp/managed-resources
+      cd /opt/terraform
+      
+      echo 'resource "local_file" "config" {' > main.tf
+      echo '  filename = "/tmp/managed-resources/app-config.json"' >> main.tf
+      echo '  content  = jsonencode({' >> main.tf
+      echo '    app_name = "production-api"' >> main.tf
+      echo '    version  = "1.0.0"' >> main.tf
+      echo '    replicas = 3' >> main.tf
+      echo '    enabled  = true' >> main.tf
+      echo '  })' >> main.tf
+      echo '}' >> main.tf
+      echo '' >> main.tf
+      echo 'resource "local_file" "database" {' >> main.tf
+      echo '  filename = "/tmp/managed-resources/database.conf"' >> main.tf
+      echo '  content  = <<-EOT' >> main.tf
+      echo '    host=db.example.com' >> main.tf
+      echo '    port=5432' >> main.tf
+      echo '    database=production' >> main.tf
+      echo '    max_connections=100' >> main.tf
+      echo '  EOT' >> main.tf
+      echo '}' >> main.tf
+      
+      chown -R ubuntu:ubuntu /opt/terraform
+      
+      terraform init
+      terraform apply -auto-approve
+      
+      echo '{"app_name":"production-api","version":"2.0.0","replicas":5,"enabled":true}' > /tmp/managed-resources/app-config.json
+      sed -i 's/max_connections=100/max_connections=50/' /tmp/managed-resources/database.conf
+      
+      chown -R ubuntu:ubuntu /opt/terraform /tmp/managed-resources
+      
+      echo "Drift scenario created - check /opt/terraform"
+
