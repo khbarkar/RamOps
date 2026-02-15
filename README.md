@@ -2,7 +2,7 @@
   <img src="logo.png" alt="openRam" width="400">
 </p>
 
-# openRam
+# Ram Ops ( hrutur ) 
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
 
