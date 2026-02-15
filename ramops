@@ -49,99 +49,6 @@ check_deps() {
     echo "  brew install git"
     exit 1
   fi
-  
-  # Check for VM tools
-  local has_vm_tool=false
-  if command -v limactl &> /dev/null || command -v vagrant &> /dev/null || command -v kind &> /dev/null; then
-    has_vm_tool=true
-  fi
-  
-  if [ "$has_vm_tool" = false ]; then
-    clear
-    show_logo
-    echo -e "${ORANGE}No VM tool detected.${NC}"
-    echo ""
-    echo "Lima is recommended for running multi-VM scenarios."
-    echo ""
-    echo -e "${GRAY}Would you like to install Lima? (y/n)${NC}"
-    read -rsn1 choice
-    
-    case $choice in
-      'y'|'Y')
-        echo ""
-        echo -e "${ORANGE}Installing Lima...${NC}"
-        if command -v brew &> /dev/null; then
-          brew install lima
-          echo ""
-          echo -e "${ORANGE}Lima installed! Restarting...${NC}"
-          sleep 2
-          exec "$0"
-        else
-          echo ""
-          echo -e "${ORANGE}Homebrew not found. Install Lima manually:${NC}"
-          echo "  brew install lima"
-          exit 1
-        fi
-        ;;
-      *)
-        clear
-        echo -e "${ORANGE}You can install Lima later with:${NC}"
-        echo "  brew install lima"
-        echo ""
-        echo "Or install Vagrant for VM scenarios:"
-        echo "  brew install vagrant"
-        echo ""
-        echo "Kind is also supported for Kubernetes scenarios:"
-        echo "  brew install kind"
-        exit 0
-        ;;
-    esac
-  fi
-  
-  # Check for socket_vmnet if Lima is installed
-  if command -v limactl &> /dev/null; then
-    if [ ! -f "/opt/socket_vmnet/bin/socket_vmnet" ]; then
-      clear
-      show_logo
-      echo -e "${ORANGE}Lima requires socket_vmnet for multi-VM networking.${NC}"
-      echo ""
-      echo -e "${GRAY}Would you like to install socket_vmnet? (y/n)${NC}"
-      read -rsn1 choice
-      
-      case $choice in
-        'y'|'Y')
-          echo ""
-          echo -e "${ORANGE}Installing socket_vmnet...${NC}"
-          if command -v brew &> /dev/null; then
-            brew install socket_vmnet
-            echo ""
-            echo -e "${ORANGE}Starting socket_vmnet service...${NC}"
-            sudo brew services start socket_vmnet
-            echo ""
-            echo -e "${ORANGE}socket_vmnet installed! Press any key to continue...${NC}"
-            read -n 1 -s
-          else
-            echo ""
-            echo -e "${ORANGE}Homebrew not found. Install manually:${NC}"
-            echo "  brew install socket_vmnet"
-            echo "  sudo brew services start socket_vmnet"
-            exit 1
-          fi
-          ;;
-        *)
-          echo ""
-          echo -e "${ORANGE}Note: Multi-VM scenarios may not work without socket_vmnet.${NC}"
-          echo ""
-          echo "Install later with:"
-          echo "  brew install socket_vmnet"
-          echo "  sudo brew services start socket_vmnet"
-          echo ""
-          echo -e "${GRAY}Press any key to continue...${NC}"
-          read -n 1 -s
-          ;;
-      esac
-    fi
-  fi
 }
 
 # Clone or update repo
@@ -320,6 +227,123 @@ draw_action_menu() {
 }
 
 # Run action
+# Check incident dependencies
+check_incident_deps() {
+  local category=$1
+  local incident_num=$2
+  
+  # Determine what's needed
+  local needs_lima=false
+  local needs_kind=false
+  
+  case $category in
+    kubernetes)
+      needs_kind=true
+      ;;
+    kafka|deployment|terraform|observability)
+      needs_lima=true
+      ;;
+  esac
+  
+  # Check Kind
+  if [ "$needs_kind" = true ] && ! command -v kind &> /dev/null; then
+    clear
+    echo -e "${ORANGE}This incident requires Kind (Kubernetes in Docker).${NC}"
+    echo ""
+    echo -e "${GRAY}Would you like to install Kind? (y/n)${NC}"
+    read -rsn1 choice
+    
+    case $choice in
+      'y'|'Y')
+        echo ""
+        echo -e "${ORANGE}Installing Kind...${NC}"
+        if command -v brew &> /dev/null; then
+          brew install kind
+          echo ""
+          echo -e "${ORANGE}Kind installed!${NC}"
+          sleep 1
+        else
+          echo ""
+          echo -e "${ORANGE}Install manually: brew install kind${NC}"
+          return 1
+        fi
+        ;;
+      *)
+        return 1
+        ;;
+    esac
+  fi
+  
+  # Check Lima
+  if [ "$needs_lima" = true ]; then
+    if ! command -v limactl &> /dev/null; then
+      clear
+      echo -e "${ORANGE}This incident requires Lima for VM scenarios.${NC}"
+      echo ""
+      echo -e "${GRAY}Would you like to install Lima? (y/n)${NC}"
+      read -rsn1 choice
+      
+      case $choice in
+        'y'|'Y')
+          echo ""
+          echo -e "${ORANGE}Installing Lima...${NC}"
+          if command -v brew &> /dev/null; then
+            brew install lima
+            echo ""
+            echo -e "${ORANGE}Lima installed!${NC}"
+            sleep 1
+          else
+            echo ""
+            echo -e "${ORANGE}Install manually: brew install lima${NC}"
+            return 1
+          fi
+          ;;
+        *)
+          return 1
+          ;;
+      esac
+    fi
+    
+    # Check socket_vmnet for multi-VM scenarios
+    if [[ "$category" == "kafka" ]] && [ ! -f "/opt/socket_vmnet/bin/socket_vmnet" ]; then
+      clear
+      echo -e "${ORANGE}Multi-VM scenarios require socket_vmnet.${NC}"
+      echo ""
+      echo -e "${GRAY}Would you like to install socket_vmnet? (y/n)${NC}"
+      read -rsn1 choice
+      
+      case $choice in
+        'y'|'Y')
+          echo ""
+          echo -e "${ORANGE}Installing socket_vmnet...${NC}"
+          if command -v brew &> /dev/null; then
+            brew install socket_vmnet
+            echo ""
+            echo -e "${ORANGE}Starting socket_vmnet service (requires sudo)...${NC}"
+            sudo brew services start socket_vmnet
+            echo ""
+            echo -e "${ORANGE}socket_vmnet installed!${NC}"
+            sleep 1
+          else
+            echo ""
+            echo -e "${ORANGE}Install manually:${NC}"
+            echo "  brew install socket_vmnet"
+            echo "  sudo brew services start socket_vmnet"
+            return 1
+          fi
+          ;;
+        *)
+          echo ""
+          echo -e "${ORANGE}Warning: Setup may fail without socket_vmnet.${NC}"
+          sleep 2
+          ;;
+      esac
+    fi
+  fi
+  
+  return 0
+}
+
 run_action() {
   local action=$1
   local category=$2
@@ -327,6 +351,16 @@ run_action() {
   
   local incident_path="$category/incident-$incident_num"
   cd "$INSTALL_DIR/incidents/$incident_path"
+  
+  # Check dependencies before setup
+  if [ $action -eq 0 ]; then
+    if ! check_incident_deps "$category" "$incident_num"; then
+      echo ""
+      echo -e "${GRAY}Press any key to continue...${NC}"
+      read -n 1 -s
+      return
+    fi
+  fi
   
   clear
   case $action in
