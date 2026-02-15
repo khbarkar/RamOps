@@ -1,4 +1,3 @@
-name: app-server
 arch: "aarch64"
 images:
   - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
@@ -17,39 +16,23 @@ provision:
       apt-get update
       apt-get install -y python3 python3-pip
       
-      # Create app directory
       mkdir -p /opt/app/{releases,current}
       
-      # Create sample app
-      cat > /opt/app/app.py <<'EOF'
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
-
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps({"status": "ok", "version": "1.0"}).encode())
-
-HTTPServer(('', 8000), Handler).serve_forever()
-EOF
+      cat > /opt/app/app.py << 'APPEOF'
+      from http.server import HTTPServer, BaseHTTPRequestHandler
+      import json
       
-      # Create systemd service
-      cat > /etc/systemd/system/app.service <<'EOF'
-[Unit]
-Description=Sample App
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/app/current
-ExecStart=/usr/bin/python3 /opt/app/current/app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      class Handler(BaseHTTPRequestHandler):
+          def do_GET(self):
+              self.send_response(200)
+              self.send_header('Content-type', 'application/json')
+              self.end_headers()
+              self.wfile.write(json.dumps({"status": "ok", "version": "1.0"}).encode())
+      
+      HTTPServer(('', 8000), Handler).serve_forever()
+      APPEOF
+      
+      printf '%s\n' '[Unit]' 'Description=Sample App' 'After=network.target' '' '[Service]' 'Type=simple' 'WorkingDirectory=/opt/app/current' 'ExecStart=/usr/bin/python3 /opt/app/current/app.py' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/app.service
       
       systemctl daemon-reload
       

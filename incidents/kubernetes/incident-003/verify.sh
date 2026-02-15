@@ -25,21 +25,21 @@ if ! kubectl exec deploy/backend -- nslookup database.default.svc.cluster.local 
   echo "FAIL: Cannot resolve internal service 'database.default.svc.cluster.local'"
   exit 1
 fi
-echo "✓ Can resolve internal service (database)"
+echo "[ok] Can resolve internal service (database)"
 
 # Test kubernetes service resolution
 if ! kubectl exec deploy/backend -- nslookup kubernetes.default.svc.cluster.local > /dev/null 2>&1; then
   echo "FAIL: Cannot resolve 'kubernetes.default.svc.cluster.local'"
   exit 1
 fi
-echo "✓ Can resolve kubernetes service"
+echo "[ok] Can resolve kubernetes service"
 
 # Test external DNS resolution
 if ! kubectl exec deploy/backend -- nslookup google.com > /dev/null 2>&1; then
   echo "FAIL: Cannot resolve external domain 'google.com'"
   exit 1
 fi
-echo "✓ Can resolve external domains"
+echo "[ok] Can resolve external domains"
 
 echo ""
 
@@ -51,7 +51,7 @@ if [ "$BACKEND_STATUS" != "True" ]; then
   echo "FAIL: Backend deployment is not Available"
   exit 1
 fi
-echo "✓ Backend deployment is healthy"
+echo "[ok] Backend deployment is healthy"
 
 echo ""
 echo "============================================"

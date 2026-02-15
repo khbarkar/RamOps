@@ -119,10 +119,10 @@ python3 scripts/load-generator.py --target-mbps 100 --duration 60
 ```
 
 Healthy metrics:
-- ✅ Consumer lag stays < 10k messages
-- ✅ Produce latency p99 < 100ms
-- ✅ Disk I/O wait < 20%
-- ✅ Request handler idle % > 30%
+- [ok] Consumer lag stays < 10k messages
+- [ok] Produce latency p99 < 100ms
+- [ok] Disk I/O wait < 20%
+- [ok] Request handler idle % > 30%
 
 ## Key Takeaways
 

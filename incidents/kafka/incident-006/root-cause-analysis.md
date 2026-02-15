@@ -106,10 +106,10 @@ python3 scripts/load-generator.py --target-mbps 100 --duration 60
 ```
 
 Healthy metrics:
-- ✅ Consumer lag stays < 10k messages
-- ✅ Network throughput > 100 Mbit/s (no longer capped at 50)
-- ✅ Request queue time < 50ms
-- ✅ Fetch request latency < 200ms
+- [ok] Consumer lag stays < 10k messages
+- [ok] Network throughput > 100 Mbit/s (no longer capped at 50)
+- [ok] Request queue time < 50ms
+- [ok] Fetch request latency < 200ms
 
 ## Key Takeaways
 

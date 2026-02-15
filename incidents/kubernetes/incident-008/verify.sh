@@ -24,7 +24,7 @@ if ! echo "$CERT" | openssl x509 -checkend 0 -noout 2>/dev/null; then
   exit 1
 fi
 
-echo "✓ Certificate is valid"
+echo "[ok] Certificate is valid"
 
 # Check certificate has reasonable expiration (at least 1 day in the future)
 if ! echo "$CERT" | openssl x509 -checkend 86400 -noout 2>/dev/null; then
@@ -53,7 +53,7 @@ if [ "$PHASE" != "Running" ]; then
   exit 1
 fi
 
-echo "✓ Pod is running"
+echo "[ok] Pod is running"
 
 # Test HTTPS connection
 echo ""
@@ -62,14 +62,14 @@ if ! kubectl run test-curl --image=alpine --rm -i --restart=Never --quiet -- sh 
   apk add --no-cache curl openssl >/dev/null 2>&1
   # Test with certificate validation (should work now)
   if curl -s --cacert /dev/null -k https://api-gateway/health | grep -q "OK"; then
-    echo "✓ HTTPS connection successful"
+    echo "[ok] HTTPS connection successful"
     exit 0
   else
-    echo "✗ HTTPS connection failed"
+    echo "[fail] HTTPS connection failed"
     exit 1
   fi
 ' 2>/dev/null; then
-  echo "✓ HTTPS endpoint responding"
+  echo "[ok] HTTPS endpoint responding"
 else
   echo "FAIL: HTTPS endpoint not responding correctly"
   exit 1

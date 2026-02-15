@@ -30,6 +30,6 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
 fi
 
 echo ""
-echo "✓ Ram Ops installed!"
+echo "[ok] Ram Ops installed!"
 echo ""
 echo "Run: ramops"

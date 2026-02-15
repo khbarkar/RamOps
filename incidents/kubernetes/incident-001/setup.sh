@@ -29,7 +29,7 @@ echo "Deploying broken workload..."
 kubectl apply -f "$SCENARIO_DIR/manifests/deployment.yaml"
 
 echo ""
-echo "Waiting for pod to enter CrashLoopBackOff (this takes ~30s)..."
+echo "Breaking something in the cluster (this takes ~30s)..."
 sleep 30
 
 echo ""
