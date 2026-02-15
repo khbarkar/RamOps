@@ -25,13 +25,12 @@ show_logo() {
   cat << 'EOF'
 
 
- ██████╗ ██████╗ ███████╗███╗   ██╗██████╗  █████╗ ███╗   ███╗
-██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔══██╗████╗ ████║
-██║   ██║██████╔╝█████╗  ██╔██╗ ██║██████╔╝███████║██╔████╔██║
-██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══██╗██╔══██║██║╚██╔╝██║
-╚██████╔╝██║     ███████╗██║ ╚████║██║  ██║██║  ██║██║ ╚═╝ ██║
- ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
-
+██████╗  █████╗ ███╗   ███╗ ██████╗ ██████╗ ███████╗
+██╔══██╗██╔══██╗████╗ ████║██╔═══██╗██╔══██╗██╔════╝
+██████╔╝███████║██╔████╔██║██║   ██║██████╔╝███████╗
+██╔══██╗██╔══██║██║╚██╔╝██║██║   ██║██╔═══╝ ╚════██║
+██║  ██║██║  ██║██║ ╚═╝ ██║╚██████╔╝██║     ███████║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝     ╚══════╝
 
 EOF
   echo -e "${NC}"
@@ -555,9 +554,11 @@ difficulty_menu() {
       'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
       'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
       '')
-        local incidents_raw=$(get_incidents_by_difficulty "${difficulties[$selected]}")
-        if [ -n "$incidents_raw" ]; then
-          mapfile -t incidents <<< "$incidents_raw"
+        local incidents=()
+        while IFS= read -r line; do
+          incidents+=("$line")
+        done < <(get_incidents_by_difficulty "${difficulties[$selected]}")
+        if [ ${#incidents[@]} -gt 0 ]; then
           incident_menu "${incidents[@]}"
         fi
         ;;
@@ -588,9 +589,11 @@ technology_menu() {
       'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
       'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
       '')
-        local incidents_raw=$(get_incidents_by_technology "${technologies[$selected]}")
-        if [ -n "$incidents_raw" ]; then
-          mapfile -t incidents <<< "$incidents_raw"
+        local incidents=()
+        while IFS= read -r line; do
+          incidents+=("$line")
+        done < <(get_incidents_by_technology "${technologies[$selected]}")
+        if [ ${#incidents[@]} -gt 0 ]; then
           incident_menu "${incidents[@]}"
         fi
         ;;
