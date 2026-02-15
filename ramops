@@ -367,39 +367,41 @@ check_incident_deps() {
     fi
     
     # Check socket_vmnet for multi-VM scenarios
-    if [[ "$category" == "kafka" ]] && ! command -v socket_vmnet &> /dev/null; then
-      clear
-      echo -e "${ORANGE}Multi-VM scenarios require socket_vmnet.${NC}"
-      echo ""
-      echo -e "${GRAY}Would you like to install socket_vmnet? (y/n)${NC}"
-      read -rsn1 choice
-      
-      case $choice in
-        'y'|'Y')
-          echo ""
-          echo -e "${ORANGE}Installing socket_vmnet...${NC}"
-          if command -v brew &> /dev/null; then
-            brew install socket_vmnet
+    if [[ "$category" == "kafka" ]]; then
+      if ! brew list socket_vmnet &>/dev/null; then
+        clear
+        echo -e "${ORANGE}Multi-VM scenarios require socket_vmnet.${NC}"
+        echo ""
+        echo -e "${GRAY}Would you like to install socket_vmnet? (y/n)${NC}"
+        read -rsn1 choice
+        
+        case $choice in
+          'y'|'Y')
             echo ""
-            echo -e "${ORANGE}Starting socket_vmnet service (requires sudo)...${NC}"
-            sudo brew services start socket_vmnet
+            echo -e "${ORANGE}Installing socket_vmnet...${NC}"
+            if command -v brew &> /dev/null; then
+              brew install socket_vmnet
+              echo ""
+              echo -e "${ORANGE}Starting socket_vmnet service (requires sudo)...${NC}"
+              sudo brew services start socket_vmnet
+              echo ""
+              echo -e "${ORANGE}socket_vmnet installed!${NC}"
+              sleep 1
+            else
+              echo ""
+              echo -e "${ORANGE}Install manually:${NC}"
+              echo "  brew install socket_vmnet"
+              echo "  sudo brew services start socket_vmnet"
+              return 1
+            fi
+            ;;
+          *)
             echo ""
-            echo -e "${ORANGE}socket_vmnet installed!${NC}"
-            sleep 1
-          else
-            echo ""
-            echo -e "${ORANGE}Install manually:${NC}"
-            echo "  brew install socket_vmnet"
-            echo "  sudo brew services start socket_vmnet"
-            return 1
-          fi
-          ;;
-        *)
-          echo ""
-          echo -e "${ORANGE}Warning: Setup may fail without socket_vmnet.${NC}"
-          sleep 2
-          ;;
-      esac
+            echo -e "${ORANGE}Warning: Setup may fail without socket_vmnet.${NC}"
+            sleep 2
+            ;;
+        esac
+      fi
     fi
   fi
   

@@ -29,7 +29,7 @@ limactl delete lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null |
 echo ""
 echo "Starting VMs with Lima (this takes ~5-10 minutes)..."
 echo "  - 1 monitoring VM (Zookeeper + Prometheus + Grafana)"
-echo "  - 3 Kafka brokers with slow disk I/O throttling"
+echo "  - 3 Kafka brokers"
 echo ""
 
 # Start monitoring first (has Zookeeper)
