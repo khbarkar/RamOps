@@ -84,9 +84,9 @@ header {
 }
 
 .filter-pill.active {
-    background: #FF0000;
+    background: #FF6600;
     color: #FFFFFF;
-    border-color: #FF0000;
+    border-color: #FF6600;
 }
 
 /* Results Count */
@@ -159,7 +159,7 @@ header {
 }
 
 .incident-card .view-link {
-    color: #FF0000;
+    color: #FF6600;
     font-size: 14px;
     font-weight: 500;
 }
