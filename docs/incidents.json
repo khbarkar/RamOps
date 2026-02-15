@@ -1,9 +1,9 @@
 [
   {
     "id": "incidents/terraform/incident-011",
-    "title": "Incident 011",
-    "description": "Solution: Infrastructure Drift Detection Root Cause **Infrastructure drift** occurred when someone m...",
-    "difficulty": "Not Rated",
+    "title": "Infrastructure Drift Detection",
+    "description": "Your team manages infrastructure using Terraform. Everything was deployed correctly last week, but now the production environment is behaving differently than expected. Someone may have made manual ch...",
+    "difficulty": "Intermediate",
     "skills": [],
     "technologies": [
       "Terraform"
@@ -12,9 +12,9 @@
   },
   {
     "id": "incidents/observability/incident-012",
-    "title": "Incident 012",
-    "description": "Solution: Alert Storm from Single Root Cause Root Cause A **single infrastructure failure** (databas...",
-    "difficulty": "Not Rated",
+    "title": "Alert Storm from Single Root Cause",
+    "description": "It's 3am and your phone won't stop buzzing. Dozens of alerts are firing: \"Database connection failed\", \"API latency high\", \"Cache miss rate elevated\", \"Queue backlog growing\", \"Error rate spiking\". Th...",
+    "difficulty": "Intermediate-Advanced",
     "skills": [],
     "technologies": [
       "Observability"
@@ -23,9 +23,9 @@
   },
   {
     "id": "incidents/kafka/incident-006",
-    "title": "Incident 006",
-    "description": "Solution: Kafka Network-Bound Brokers Root Cause Kafka brokers are throttled to **50 Mbit/s network ...",
-    "difficulty": "Not Rated",
+    "title": "Kafka Network-Bound Brokers",
+    "description": "Your Kafka cluster has increasing consumer lag even though brokers have plenty of CPU and disk I/O headroom. The problem: network bandwidth is saturated. Brokers can't send/receive data fast enough. T...",
+    "difficulty": "Intermediate-Advanced",
     "skills": [],
     "technologies": [
       "Kafka"
@@ -50,9 +50,9 @@
   },
   {
     "id": "incidents/deployment/incident-007",
-    "title": "Incident 007",
-    "description": "Solution: Hard Link Deployment Trap What Happened The deployment system used **hard links** to rotat...",
-    "difficulty": "Not Rated",
+    "title": "Hard Link Deployment Trap (Vagrant)",
+    "description": "Your deployment system uses hard links to rotate config files atomically. When a deployment of v2.0.0 with a broken config crashes the app, the engineer tries to roll back to v1.0.0. But the rollback ...",
+    "difficulty": "Intermediate-Advanced",
     "skills": [],
     "technologies": [
       "Deployment"
@@ -61,9 +61,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-009",
-    "title": "Incident 009",
-    "description": "Solution: Memory Leak in Production Root Cause The `data-processor` application has a **memory leak*...",
-    "difficulty": "Not Rated",
+    "title": "Incident-009",
+    "description": "A critical microservice keeps getting killed and restarting. The service runs fine for a few minutes, then suddenly dies. Users are experiencing intermittent errors when the service is unavailable dur...",
+    "difficulty": "Intermediate",
     "skills": [],
     "technologies": [
       "Kubernetes"
@@ -87,9 +87,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-008",
-    "title": "Incident 008",
-    "description": "Root Cause Analysis: Incident-008 Summary **Incident:** HTTPS connections failing with certificate e...",
-    "difficulty": "Not Rated",
+    "title": "Incident-008",
+    "description": "Your API gateway suddenly stopped accepting HTTPS connections. Clients are reporting \"certificate has expired\" errors. The service was working fine yesterday, but now all HTTPS traffic is failing whil...",
+    "difficulty": "Intermediate",
     "skills": [],
     "technologies": [
       "Kubernetes"
@@ -98,9 +98,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-010",
-    "title": "Incident 010",
-    "description": "Solution: Exposed Database Credentials Root Cause Sensitive credentials (database passwords, API key...",
-    "difficulty": "Not Rated",
+    "title": "Exposed Database Credentials",
+    "description": "A security audit has flagged your application deployment. The auditors found sensitive credentials stored insecurely in your Kubernetes configuration. This is a critical security vulnerability that mu...",
+    "difficulty": "Beginner-Intermediate",
     "skills": [],
     "technologies": [
       "Kubernetes"
@@ -109,9 +109,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-004",
-    "title": "Incident 004",
-    "description": "Root Cause Analysis: Incident-004 Summary **Incident:** Application pod crash-looping with write err...",
-    "difficulty": "Not Rated",
+    "title": "Storage Volume Full",
+    "description": "Your application pod is crash-looping with cryptic errors. The application logs show \"No space left on device\" errors. The pod has filled its allocated storage volume and can no longer write files, ca...",
+    "difficulty": "Beginner-Intermediate",
     "skills": [],
     "technologies": [
       "Kubernetes"
@@ -120,9 +120,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-003",
-    "title": "Incident 003",
-    "description": "Solution: DNS Outage Diagnosis Steps 1. Check CoreDNS Pod Status ```bash kubectl get pods -n kube-sy...",
-    "difficulty": "Not Rated",
+    "title": "DNS Outage",
+    "description": "The cluster's DNS system (CoreDNS) has been misconfigured and is failing. Pods cannot resolve service names or external domains. Your application's backend service keeps failing to connect to the data...",
+    "difficulty": "Intermediate",
     "skills": [],
     "technologies": [
       "Kubernetes"
@@ -131,9 +131,9 @@
   },
   {
     "id": "incidents/kubernetes/incident-002",
-    "title": "Incident 002",
-    "description": "Solution: Node Goes NotReady Root Cause One of the worker nodes has been **paused at the Docker leve...",
-    "difficulty": "Not Rated",
+    "title": "Node Goes NotReady",
+    "description": "Your monitoring dashboard shows one of the cluster nodes has gone `NotReady`. A 3-replica deployment was running across the cluster. You need to identify the failed node, understand the blast radius, ...",
+    "difficulty": "Beginner",
     "skills": [],
     "technologies": [
       "Kubernetes"

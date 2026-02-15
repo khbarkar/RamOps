@@ -75,6 +75,37 @@ def get_description_fallback(content: str, frontmatter: Optional[Dict]) -> str:
     return content[:100] + ('...' if len(content) > 100 else '')
 
 
+def parse_readme_metadata(readme_path: Path) -> Dict:
+    """Parse metadata from README.md file."""
+    try:
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        metadata = {}
+        
+        # Extract title from first heading
+        title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+        if title_match:
+            metadata['title'] = title_match.group(1).strip()
+        
+        # Extract description from ## Scenario section
+        scenario_match = re.search(r'##\s+Scenario\s*\n\n(.+?)(?:\n\n##|\Z)', content, re.DOTALL)
+        if scenario_match:
+            desc = scenario_match.group(1).strip()
+            desc = ' '.join(desc.split())  # Normalize whitespace
+            metadata['description'] = desc[:200] + ('...' if len(desc) > 200 else '')
+        
+        # Extract difficulty
+        diff_match = re.search(r'\*\*Difficulty:\*\*\s*(.+?)(?:\n|$)', content)
+        if diff_match:
+            metadata['difficulty'] = diff_match.group(1).strip()
+        
+        return metadata
+    except Exception as e:
+        print(f"Warning: Could not parse README {readme_path}: {e}")
+        return {}
+
+
 def parse_incident(rca_path: Path) -> Optional[Dict]:
     """Parse a single incident from its RCA file."""
     try:
@@ -83,19 +114,29 @@ def parse_incident(rca_path: Path) -> Optional[Dict]:
 
         frontmatter = extract_frontmatter(content)
         incident_dir = rca_path.parent
+        readme_path = incident_dir / 'README.md'
 
         # Get relative path from repo root (e.g., incidents/kubernetes/incident-001)
         rel_path = incident_dir.relative_to(BASE_DIR)
 
-        # Extract title
+        # Try to get metadata from README.md first
+        readme_metadata = parse_readme_metadata(readme_path) if readme_path.exists() else {}
+
+        # Extract title (priority: frontmatter > README > directory name)
         if frontmatter and 'title' in frontmatter:
             title = frontmatter['title']
+        elif 'title' in readme_metadata:
+            title = readme_metadata['title']
         else:
-            # Fallback: use directory name
             title = incident_dir.name.replace('-', ' ').replace('_', ' ').title()
 
-        # Extract difficulty
-        difficulty = frontmatter.get('difficulty', 'Not Rated') if frontmatter else 'Not Rated'
+        # Extract difficulty (priority: frontmatter > README > Not Rated)
+        if frontmatter and 'difficulty' in frontmatter:
+            difficulty = frontmatter['difficulty']
+        elif 'difficulty' in readme_metadata:
+            difficulty = readme_metadata['difficulty']
+        else:
+            difficulty = 'Not Rated'
 
         # Extract skills
         skills = frontmatter.get('skills', []) if frontmatter else []
@@ -114,8 +155,13 @@ def parse_incident(rca_path: Path) -> Optional[Dict]:
                 tech = path_parts[1].replace('-', ' ').title()
                 technologies = [tech]
 
-        # Get description
-        description = get_description_fallback(content, frontmatter)
+        # Get description (priority: frontmatter > README > RCA fallback)
+        if frontmatter and 'description' in frontmatter:
+            description = frontmatter['description']
+        elif 'description' in readme_metadata:
+            description = readme_metadata['description']
+        else:
+            description = get_description_fallback(content, frontmatter)
 
         return {
             'id': str(rel_path).replace('\\', '/'),
