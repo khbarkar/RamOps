@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== openRam: Verifying fix ==="
+echo "=== RamOps: Verifying fix ==="
 echo ""
 
 POD=$(kubectl get pods -l app=web-frontend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)

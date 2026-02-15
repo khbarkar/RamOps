@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CLUSTER_NAME="openram-crashloop"
+CLUSTER_NAME="ramops-crashloop"
 SCENARIO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "=== openRam: Single Pod Crashloop ==="
+echo "=== RamOps: Single Pod Crashloop ==="
 echo ""
 
 # Check prerequisites

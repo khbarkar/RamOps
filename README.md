@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="openRam" width="400">
+  <img src="logo.png" alt="RamOps" width="400">
 </p>
 
 # Ram Ops ( hrutur ) 
@@ -29,8 +29,6 @@ cd broken-cluster/single-pod-crashloop
 ./verify.sh     # checks if your fix works
 ./teardown.sh   # cleans up the cluster
 ```
-
-See [TODO.md](TODO.md) for the full list of 100 planned scenarios across all categories.
 
 ## Why "Hrutur"?
 
