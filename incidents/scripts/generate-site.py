@@ -119,16 +119,15 @@ def parse_incident(rca_path: Path) -> Optional[Dict]:
         # Get relative path from repo root (e.g., incidents/kubernetes/incident-001)
         rel_path = incident_dir.relative_to(BASE_DIR)
 
-        # Try to get metadata from README.md first
-        readme_metadata = parse_readme_metadata(readme_path) if readme_path.exists() else {}
+        # Extract incident number from directory name
+        incident_num_match = re.search(r'incident-(\d+)', incident_dir.name)
+        incident_number = incident_num_match.group(1) if incident_num_match else '000'
+        
+        # Title is just the incident number
+        title = f"Incident {incident_number}"
 
-        # Extract title (priority: frontmatter > README > directory name)
-        if frontmatter and 'title' in frontmatter:
-            title = frontmatter['title']
-        elif 'title' in readme_metadata:
-            title = readme_metadata['title']
-        else:
-            title = incident_dir.name.replace('-', ' ').replace('_', ' ').title()
+        # Try to get metadata from README.md for description
+        readme_metadata = parse_readme_metadata(readme_path) if readme_path.exists() else {}
 
         # Extract difficulty (priority: frontmatter > README > Not Rated)
         if frontmatter and 'difficulty' in frontmatter:

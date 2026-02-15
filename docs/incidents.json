@@ -1,7 +1,7 @@
 [
   {
     "id": "incidents/terraform/incident-011",
-    "title": "Infrastructure Drift Detection",
+    "title": "Incident 011",
     "description": "Your team manages infrastructure using Terraform. Everything was deployed correctly last week, but now the production environment is behaving differently than expected. Someone may have made manual ch...",
     "difficulty": "Intermediate",
     "skills": [],
@@ -12,7 +12,7 @@
   },
   {
     "id": "incidents/observability/incident-012",
-    "title": "Alert Storm from Single Root Cause",
+    "title": "Incident 012",
     "description": "It's 3am and your phone won't stop buzzing. Dozens of alerts are firing: \"Database connection failed\", \"API latency high\", \"Cache miss rate elevated\", \"Queue backlog growing\", \"Error rate spiking\". Th...",
     "difficulty": "Intermediate-Advanced",
     "skills": [],
@@ -22,8 +22,30 @@
     "path": "incidents/observability/incident-012"
   },
   {
+    "id": "incidents/sysadmin/incident-014",
+    "title": "Incident 014",
+    "description": "Production alerts wake you at 2am: \"10,000+ zombie processes detected\". The application server is sluggish. New processes are failing to spawn with \"fork: Resource temporarily unavailable\". The monito...",
+    "difficulty": "Intermediate-Advanced",
+    "skills": [],
+    "technologies": [
+      "Sysadmin"
+    ],
+    "path": "incidents/sysadmin/incident-014"
+  },
+  {
+    "id": "incidents/sysadmin/incident-013",
+    "title": "Incident 013",
+    "description": "Alerts fire at 3am: disk usage on the web server is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were \"deleted\" hours ago. But the disk space was never fre...",
+    "difficulty": "Beginner-Intermediate",
+    "skills": [],
+    "technologies": [
+      "Sysadmin"
+    ],
+    "path": "incidents/sysadmin/incident-013"
+  },
+  {
     "id": "incidents/kafka/incident-006",
-    "title": "Kafka Network-Bound Brokers",
+    "title": "Incident 006",
     "description": "Your Kafka cluster has increasing consumer lag even though brokers have plenty of CPU and disk I/O headroom. The problem: network bandwidth is saturated. Brokers can't send/receive data fast enough. T...",
     "difficulty": "Intermediate-Advanced",
     "skills": [],
@@ -34,7 +56,7 @@
   },
   {
     "id": "incidents/kafka/incident-005",
-    "title": "Kafka cluster experiencing high latency and consumer lag",
+    "title": "Incident 005",
     "description": "Kafka brokers showing high latency and growing consumer lag due to disk I/O bottleneck",
     "difficulty": "Intermediate",
     "skills": [
@@ -50,8 +72,8 @@
   },
   {
     "id": "incidents/deployment/incident-007",
-    "title": "Hard Link Deployment Trap (Vagrant)",
-    "description": "Your deployment system uses hard links to rotate config files atomically. When a deployment of v2.0.0 with a broken config crashes the app, the engineer tries to roll back to v1.0.0. But the rollback ...",
+    "title": "Incident 007",
+    "description": "You're on-call when alerts fire: the production app server has crashed and won't restart. Looking at the deployment logs, you see: - v1.0.0 was deployed successfully yesterday using hard links - v2.0....",
     "difficulty": "Intermediate-Advanced",
     "skills": [],
     "technologies": [
@@ -61,7 +83,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-009",
-    "title": "Incident-009",
+    "title": "Incident 009",
     "description": "A critical microservice keeps getting killed and restarting. The service runs fine for a few minutes, then suddenly dies. Users are experiencing intermittent errors when the service is unavailable dur...",
     "difficulty": "Intermediate",
     "skills": [],
@@ -72,7 +94,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-001",
-    "title": "Production pod crash-looping",
+    "title": "Incident 001",
     "description": "Users reporting site is down due to pods stuck in CrashLoopBackOff from misconfigured liveness probe",
     "difficulty": "Beginner",
     "skills": [
@@ -87,7 +109,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-008",
-    "title": "Incident-008",
+    "title": "Incident 008",
     "description": "Your API gateway suddenly stopped accepting HTTPS connections. Clients are reporting \"certificate has expired\" errors. The service was working fine yesterday, but now all HTTPS traffic is failing whil...",
     "difficulty": "Intermediate",
     "skills": [],
@@ -98,7 +120,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-010",
-    "title": "Exposed Database Credentials",
+    "title": "Incident 010",
     "description": "A security audit has flagged your application deployment. The auditors found sensitive credentials stored insecurely in your Kubernetes configuration. This is a critical security vulnerability that mu...",
     "difficulty": "Beginner-Intermediate",
     "skills": [],
@@ -109,7 +131,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-004",
-    "title": "Storage Volume Full",
+    "title": "Incident 004",
     "description": "Your application pod is crash-looping with cryptic errors. The application logs show \"No space left on device\" errors. The pod has filled its allocated storage volume and can no longer write files, ca...",
     "difficulty": "Beginner-Intermediate",
     "skills": [],
@@ -120,7 +142,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-003",
-    "title": "DNS Outage",
+    "title": "Incident 003",
     "description": "The cluster's DNS system (CoreDNS) has been misconfigured and is failing. Pods cannot resolve service names or external domains. Your application's backend service keeps failing to connect to the data...",
     "difficulty": "Intermediate",
     "skills": [],
@@ -131,7 +153,7 @@
   },
   {
     "id": "incidents/kubernetes/incident-002",
-    "title": "Node Goes NotReady",
+    "title": "Incident 002",
     "description": "Your monitoring dashboard shows one of the cluster nodes has gone `NotReady`. A 3-replica deployment was running across the cluster. You need to identify the failed node, understand the blast radius, ...",
     "difficulty": "Beginner",
     "skills": [],

@@ -137,6 +137,8 @@ get_all_incidents() {
   echo "010:kubernetes:Exposed creds:Beginner-Intermediate"
   echo "011:terraform:Drift detection:Intermediate"
   echo "012:observability:Alert storm:Intermediate-Advanced"
+  echo "013:sysadmin:Vanishing logs:Beginner-Intermediate"
+  echo "014:sysadmin:Zombie apocalypse:Intermediate-Advanced"
 }
 
 # Get incidents by difficulty

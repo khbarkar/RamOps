@@ -22,6 +22,34 @@ if ! command -v python3 &> /dev/null; then
   exit 1
 fi
 
+if ! brew list socket_vmnet &>/dev/null; then
+  echo "ERROR: socket_vmnet is required for multi-VM networking."
+  echo ""
+  read -p "Install socket_vmnet now? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    brew install socket_vmnet
+    brew tap homebrew/services
+    HOMEBREW_PREFIX=$(brew --prefix)
+    sudo ${HOMEBREW_PREFIX}/opt/socket_vmnet/bin/socket_vmnet --pidfile=/var/run/socket_vmnet.pid /var/run/socket_vmnet &
+    sleep 2
+  else
+    echo "Cannot proceed without socket_vmnet."
+    exit 1
+  fi
+fi
+
+if [ ! -f ~/.lima/_config/override.yaml ]; then
+  echo "Configuring Lima networking..."
+  mkdir -p ~/.lima/_config
+  SOCKET_VMNET_PATH=$(brew --prefix socket_vmnet)/bin/socket_vmnet
+  cat > ~/.lima/_config/override.yaml << EOF
+networks:
+  - lima: shared
+    socketVMNet: ${SOCKET_VMNET_PATH}
+EOF
+fi
+
 echo "Cleaning up previous run..."
 limactl stop lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
 limactl delete lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
