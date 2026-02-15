@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCENARIO_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLUSTER_NAME="kafka-network-bound"
 
-echo "Destroying VMs..."
-vagrant destroy -f
-
-echo "Cleaning up Vagrant state..."
-rm -rf .vagrant
-
-echo "Done."
+echo "=== Cleaning up Kind cluster ==="
+kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
+echo "Cleanup complete!"

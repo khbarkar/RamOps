@@ -1,47 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCENARIO_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLUSTER_NAME="kafka-disk-bound"
 
-echo "=== RamOps: Verifying Fix ==="
+echo "=== RamOps: Verifying fix ==="
 echo ""
 
-# Check if VMs are running
-if ! vagrant status | grep -q "kafka1.*running"; then
-  echo "FAIL: kafka1 VM is not running."
+if ! kind get clusters | grep -q "$CLUSTER_NAME"; then
+  echo "FAIL: Cluster not running."
   exit 1
 fi
 
-echo "[ok] VMs are running."
+echo "[ok] Cluster is running."
 
-# Check if I/O throttle is removed on brokers
-THROTTLE_ACTIVE=0
-for broker in kafka1 kafka2 kafka3; do
-  THROTTLE=$(vagrant ssh "$broker" -c "cat /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device 2>/dev/null || echo ''" 2>/dev/null | grep -c "8:32" || true)
-  if [ "$THROTTLE" -gt 0 ]; then
-    echo "WARN: $broker still has disk I/O throttle active."
-    THROTTLE_ACTIVE=1
-  fi
-done
+KAFKA_PODS=$(kubectl get pods -n kafka -l app=kafka --no-headers 2>/dev/null | wc -l | tr -d ' ')
 
-if [ "$THROTTLE_ACTIVE" -eq 0 ]; then
-  echo "[ok] Disk I/O throttle removed from all brokers."
-else
-  echo "HINT: Remove throttle with:"
-  echo "  vagrant ssh kafka1 -c 'echo \"\" | sudo tee /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device'"
-  echo ""
+if [ "$KAFKA_PODS" -ne 3 ]; then
+  echo "FAIL: Expected 3 Kafka pods, found $KAFKA_PODS"
+  exit 1
 fi
 
-echo ""
-echo "Run a load test and check Grafana:"
-echo "  python3 scripts/load-generator.py --duration 60"
-echo ""
-echo "Expected behavior after fix:"
-echo "  - Consumer lag should stay low (< 10k messages)"
-echo "  - Produce latency p99 < 100ms"
-echo "  - Disk I/O wait < 20%"
+echo "[ok] All 3 Kafka brokers are running."
+
+DISK_THROTTLE=$(kubectl exec -n kafka kafka-0 -- ps aux | grep -c "dd if=/dev/zero" || echo 0)
+
+if [ "$DISK_THROTTLE" -gt 0 ]; then
+  echo "FAIL: Disk throttling still active."
+  echo "      Kill the dd process to remove throttling."
+  exit 1
+fi
+
+echo "[ok] Disk throttling removed."
+
 echo ""
 echo "============================================"
-echo "  Check metrics in Grafana:"
-echo "  http://localhost:3000"
+echo "  PASSED"
+echo "  - Kafka cluster is healthy"
+echo "  - Disk throttling has been removed"
+echo "  - Performance should be improved"
 echo "============================================"

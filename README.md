@@ -8,6 +8,8 @@ Incident simulation and training scenarios for Kubernetes and cloud infrastructu
 
 **Note:** VM-based scenarios (Lima) are currently tested on Apple Silicon (ARM) Macs only. Other architectures may require configuration adjustments.
 
+**Multi-VM Scenarios:** Kafka incidents (005, 006) require Lima networking with socket_vmnet. Due to Lima's security requirements, socket_vmnet installation can be complex. These scenarios are optional - focus on single-VM and Kubernetes incidents first.
+
 ## Quick Start
 
 **Interactive TUI (Recommended):**

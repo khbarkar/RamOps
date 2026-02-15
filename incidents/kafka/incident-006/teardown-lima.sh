@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-echo "=== Cleaning up Lima VMs ==="
-limactl stop lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
-sleep 2
-limactl delete --force lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
-echo "Cleanup complete!"

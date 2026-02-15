@@ -218,7 +218,7 @@ draw_technology_menu() {
   echo -e "${ORANGE}${BOLD}SELECT CATEGORY${NC}"
   echo ""
   
-  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "SRE")
+  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "Sysadmin")
   
   for i in "${!technologies[@]}"; do
     if [ $i -eq $selected ]; then
@@ -610,7 +610,7 @@ difficulty_menu() {
 # Technology menu loop
 technology_menu() {
   local selected=0
-  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sre")
+  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sysadmin")
   local max_items=$((${#technologies[@]} - 1))
   
   while true; do
