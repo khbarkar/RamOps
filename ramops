@@ -498,7 +498,7 @@ run_action() {
       echo ""
       
       # Extract Hints section from README
-      sed -n '/## Hints/,/## Root Cause/p' README.md | \
+      sed -n '/## Hints/,/## \(Root Cause\|Cleanup\)/p' README.md | \
       sed '$ d' | \
       sed 's/^## Hints$//' | \
       sed 's/^$//' | \

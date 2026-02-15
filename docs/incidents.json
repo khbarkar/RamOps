@@ -11,6 +11,17 @@
     "path": "incidents/terraform/incident-011"
   },
   {
+    "id": "incidents/security/incident-019",
+    "title": "Incident 019",
+    "description": "Your security team discovered that an API key was leaked in a public Docker image. The developer claims they deleted it with `RUN rm -rf /tmp/*` in the Dockerfile, but the secret is still extractable ...",
+    "difficulty": "Intermediate",
+    "skills": [],
+    "technologies": [
+      "Security"
+    ],
+    "path": "incidents/security/incident-019"
+  },
+  {
     "id": "incidents/observability/incident-012",
     "title": "Incident 012",
     "description": "It's 3am and your phone won't stop buzzing. Dozens of alerts are firing: \"Database connection failed\", \"API latency high\", \"Cache miss rate elevated\", \"Queue backlog growing\", \"Error rate spiking\". Th...",
@@ -35,7 +46,7 @@
   {
     "id": "incidents/sysadmin/incident-013",
     "title": "Incident 013",
-    "description": "Alerts fire at 3am: disk usage on the web server is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were \"deleted\" hours ago. But the disk space was never fre...",
+    "description": "Alerts fire at 3am: disk usage on the log filesystem is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were \"deleted\" hours ago. But the disk space was never...",
     "difficulty": "Beginner-Intermediate",
     "skills": [],
     "technologies": [

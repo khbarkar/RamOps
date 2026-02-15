@@ -20,11 +20,8 @@ body {
 /* Header */
 header {
     background: #000000;
-    border-bottom: 2px solid #FF6600;
-    padding: 20px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    border-bottom: 1px solid #333;
+    padding: 15px 0;
 }
 
 .header-content {
@@ -34,22 +31,18 @@ header {
 }
 
 .logo {
-    height: 60px;
+    height: 50px;
     width: auto;
-    filter: drop-shadow(0 2px 8px rgba(255, 102, 0, 0.3));
 }
 
 .github-link {
-    color: #FF6600;
+    color: #FFFFFF;
     text-decoration: none;
-    transition: all 0.3s ease;
-    padding: 8px;
-    border-radius: 4px;
+    transition: opacity 0.2s;
 }
 
 .github-link:hover {
-    background: #1A1A1A;
-    transform: scale(1.1);
+    opacity: 0.7;
 }
 
 /* Filters */
@@ -83,20 +76,17 @@ header {
     border: 1px solid #333;
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
 }
 
 .filter-pill:hover {
-    border-color: #FF6600;
-    background: #2A2A2A;
+    border-color: #666;
 }
 
 .filter-pill.active {
-    background: #FF6600;
-    color: #000000;
-    border-color: #FF6600;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(255, 102, 0, 0.4);
+    background: #FF0000;
+    color: #FFFFFF;
+    border-color: #FF0000;
 }
 
 /* Results Count */
@@ -119,7 +109,7 @@ header {
     border: 1px solid #333;
     border-radius: 8px;
     padding: 20px;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
@@ -127,28 +117,25 @@ header {
 }
 
 .incident-card:hover {
-    border-color: #FF6600;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(255, 102, 0, 0.2);
+    border-color: #666;
+    transform: translateY(-2px);
 }
 
 .incident-card h2 {
     font-size: 18px;
     margin-bottom: 10px;
-    color: #FF6600;
-    font-weight: 600;
+    color: #FFFFFF;
 }
 
 .incident-card .description {
     color: #CCCCCC;
     font-size: 14px;
     margin-bottom: 15px;
-    line-height: 1.6;
+    line-height: 1.5;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 63px;
 }
 
 .incident-card .tags {
@@ -168,22 +155,13 @@ header {
 }
 
 .tag.difficulty {
-    background: #2A2A2A;
-    color: #FF6600;
-    border-color: #FF6600;
+    background: #333;
 }
 
 .incident-card .view-link {
-    color: #FF6600;
+    color: #FF0000;
     font-size: 14px;
     font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.incident-card:hover .view-link {
-    gap: 8px;
 }
 
 /* No Results */
