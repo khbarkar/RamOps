@@ -11,6 +11,28 @@
     "path": "incidents/terraform/incident-011"
   },
   {
+    "id": "incidents/advanced/incident-053",
+    "title": "Incident 053",
+    "description": "Your etcd cluster is behaving erratically. Some API requests succeed, others fail. Different nodes report different cluster states. Your monitoring shows multiple leaders elected simultaneously. The c...",
+    "difficulty": "Expert",
+    "skills": [],
+    "technologies": [
+      "Advanced"
+    ],
+    "path": "incidents/advanced/incident-053"
+  },
+  {
+    "id": "incidents/advanced/incident-054",
+    "title": "Incident 054",
+    "description": "Your security team detected unusual CPU cache behavior on a multi-tenant Kubernetes node. A container is making millions of memory accesses with suspicious timing patterns. Analysis suggests a Spectre...",
+    "difficulty": "Expert",
+    "skills": [],
+    "technologies": [
+      "Advanced"
+    ],
+    "path": "incidents/advanced/incident-054"
+  },
+  {
     "id": "incidents/security/incident-019",
     "title": "Incident 019",
     "description": "Your security team received an alert: someone has been using a leaked API key to access your production systems. After investigation, they traced it back to a container image running in your Kubernete...",

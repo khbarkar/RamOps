@@ -145,6 +145,8 @@ get_all_incidents() {
   echo "039:forensics:Cryptominer investigation:Intermediate-Advanced"
   echo "040:forensics:Log tampering:Intermediate"
   echo "041:forensics:Reverse shell discovery:Intermediate"
+  echo "053:advanced:Consensus failure:Expert"
+  echo "054:advanced:Side-channel attack:Expert"
 }
 
 # Get incidents by difficulty
@@ -224,7 +226,7 @@ draw_technology_menu() {
   echo -e "${ORANGE}${BOLD}SELECT CATEGORY${NC}"
   echo ""
   
-  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "Sysadmin" "Security" "Forensics")
+  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "Sysadmin" "Security" "Forensics" "Advanced")
   
   for i in "${!technologies[@]}"; do
     if [ $i -eq $selected ]; then
@@ -616,7 +618,7 @@ difficulty_menu() {
 # Technology menu loop
 technology_menu() {
   local selected=0
-  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sysadmin" "security" "forensics")
+  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sysadmin" "security" "forensics" "advanced")
   local max_items=$((${#technologies[@]} - 1))
   
   while true; do
