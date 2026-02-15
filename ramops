@@ -58,8 +58,70 @@ setup_repo() {
     git clone "$REPO_URL" "$INSTALL_DIR" --quiet
   else
     cd "$INSTALL_DIR"
-    git pull --quiet 2>/dev/null || true
+    # Check for updates only if we haven't checked recently
+    local last_check_file="$INSTALL_DIR/.last_update_check"
+    local current_time=$(date +%s)
+    local check_interval=86400  # 24 hours
+    
+    if [ -f "$last_check_file" ]; then
+      local last_check=$(cat "$last_check_file")
+      local time_diff=$((current_time - last_check))
+      if [ $time_diff -lt $check_interval ]; then
+        return
+      fi
+    fi
+    
+    # Fetch and compare
+    git fetch --quiet 2>/dev/null || true
+    local local_hash=$(git rev-parse HEAD 2>/dev/null)
+    local remote_hash=$(git rev-parse @{u} 2>/dev/null)
+    
+    # Save check time
+    echo "$current_time" > "$last_check_file"
+    
+    if [ "$local_hash" != "$remote_hash" ] && [ -n "$remote_hash" ]; then
+      clear
+      show_logo
+      echo -e "${ORANGE}Updates available!${NC}"
+      echo ""
+      echo -e "${GRAY}Run 'ramops update' to get the latest scenarios.${NC}"
+      echo ""
+      echo -e "${GRAY}Press any key to continue...${NC}"
+      read -n 1 -s
+    fi
   fi
+}
+
+# Update command
+do_update() {
+  clear
+  show_logo
+  echo -e "${ORANGE}Updating Ram Ops...${NC}"
+  echo ""
+  
+  if [ ! -d "$INSTALL_DIR" ]; then
+    echo -e "${ORANGE}Ram Ops not installed. Run 'ramops' first.${NC}"
+    exit 1
+  fi
+  
+  cd "$INSTALL_DIR"
+  echo -e "${GRAY}Fetching latest changes...${NC}"
+  git fetch --quiet
+  
+  local local_hash=$(git rev-parse HEAD)
+  local remote_hash=$(git rev-parse @{u} 2>/dev/null)
+  
+  if [ "$local_hash" = "$remote_hash" ]; then
+    echo ""
+    echo -e "${ORANGE}Already up to date!${NC}"
+  else
+    echo -e "${GRAY}Pulling updates...${NC}"
+    git pull --quiet
+    echo ""
+    echo -e "${ORANGE}✓ Ram Ops updated successfully!${NC}"
+  fi
+  
+  exit 0
 }
 
 # Get all incidents with full info
@@ -585,9 +647,14 @@ main_menu() {
 
 # Main
 main() {
+  # Handle update command
+  if [ "${1:-}" = "update" ]; then
+    do_update
+  fi
+  
   check_deps
   setup_repo
   browse_menu
 }
 
-main
+main "$@"

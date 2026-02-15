@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "=== Cleaning up Kafka Lima VMs ==="
 
-limactl stop kafka1 kafka2 kafka3 monitoring 2>/dev/null || true
-limactl delete kafka1 kafka2 kafka3 monitoring 2>/dev/null || true
+limactl stop lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
+limactl delete lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
 
 echo "Cleanup complete!"

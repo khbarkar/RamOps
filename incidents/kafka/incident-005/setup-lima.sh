@@ -23,8 +23,8 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 echo "Cleaning up previous run..."
-limactl stop kafka1 kafka2 kafka3 monitoring 2>/dev/null || true
-limactl delete kafka1 kafka2 kafka3 monitoring 2>/dev/null || true
+limactl stop lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
+limactl delete lima-monitoring lima-kafka1 lima-kafka2 lima-kafka3 2>/dev/null || true
 
 echo ""
 echo "Starting VMs with Lima (this takes ~5-10 minutes)..."
@@ -48,11 +48,11 @@ wait
 
 echo ""
 echo "Starting Kafka services..."
-limactl shell monitoring sudo systemctl start zookeeper
+limactl shell lima-monitoring sudo systemctl start zookeeper
 sleep 5
-limactl shell kafka1 sudo systemctl start kafka &
-limactl shell kafka2 sudo systemctl start kafka &
-limactl shell kafka3 sudo systemctl start kafka &
+limactl shell lima-kafka1 sudo systemctl start kafka &
+limactl shell lima-kafka2 sudo systemctl start kafka &
+limactl shell lima-kafka3 sudo systemctl start kafka &
 wait
 
 echo ""
