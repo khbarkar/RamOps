@@ -27,9 +27,9 @@ wait
 
 limactl shell lima-monitoring sudo systemctl start zookeeper
 sleep 5
-limactl shell kafka1 sudo systemctl start kafka &
-limactl shell kafka2 sudo systemctl start kafka &
-limactl shell kafka3 sudo systemctl start kafka &
+limactl shell lima-kafka1 sudo systemctl start kafka &
+limactl shell lima-kafka2 sudo systemctl start kafka &
+limactl shell lima-kafka3 sudo systemctl start kafka &
 wait
 
 sleep 30

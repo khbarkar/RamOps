@@ -115,9 +115,9 @@ do_update() {
     echo -e "${ORANGE}Already up to date!${NC}"
   else
     echo -e "${GRAY}Pulling updates...${NC}"
-    git pull --quiet
+    git reset --hard origin/main --quiet
     echo ""
-    echo -e "${ORANGE}✓ Ram Ops updated successfully!${NC}"
+    echo -e "${ORANGE}[ok] Ram Ops updated successfully!${NC}"
   fi
   
   exit 0
@@ -272,7 +272,7 @@ draw_action_menu() {
   echo -e "${WHITE}$incident_title${NC}"
   echo ""
   
-  local actions=("Setup" "Verify" "Teardown" "View README")
+  local actions=("Setup" "Verify" "Teardown" "Instructions" "Hints")
   
   for i in "${!actions[@]}"; do
     if [ $i -eq $selected ]; then
@@ -457,14 +457,51 @@ run_action() {
         bash teardown.sh || true
       fi
       ;;
-    3) # View README
-      if command -v bat &> /dev/null; then
-        bat README.md
-      elif command -v less &> /dev/null; then
-        less README.md
-      else
-        cat README.md
-      fi
+    3) # Instructions
+      clear
+      echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+      echo -e "${ORANGE}  Instructions${NC}"
+      echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+      echo ""
+      
+      # Extract Scenario section from README
+      sed -n '/## Scenario/,/## Prerequisites/p' README.md | \
+      sed '$ d' | \
+      sed 's/^## Scenario$//' | \
+      sed 's/^$//' | \
+      fold -s -w 65 | \
+      sed 's/^/  /'
+      
+      echo ""
+      echo -e "${ORANGE}─────────────────────────────────────────────────────────────────${NC}"
+      echo -e "${GRAY}  Your Task:${NC}"
+      echo -e "${ORANGE}─────────────────────────────────────────────────────────────────${NC}"
+      echo ""
+      
+      # Extract Your Task section
+      sed -n '/## Your Task/,/## Hints/p' README.md | \
+      sed '$ d' | \
+      sed 's/^## Your Task$//' | \
+      sed 's/^$//' | \
+      fold -s -w 65 | \
+      sed 's/^/  /'
+      
+      ;;
+    4) # Hints
+      clear
+      echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+      echo -e "${ORANGE}  Hints${NC}"
+      echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+      echo ""
+      
+      # Extract Hints section from README
+      sed -n '/## Hints/,/## Root Cause/p' README.md | \
+      sed '$ d' | \
+      sed 's/^## Hints$//' | \
+      sed 's/^$//' | \
+      fold -s -w 65 | \
+      sed 's/^/  /'
+      
       ;;
   esac
   
