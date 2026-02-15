@@ -1,0 +1,100 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname logtamper-server
+      apt-get update
+      apt-get install -y rsyslog
+      
+      LIMA_USER=$(stat -c '%U' /home/*)
+      
+      # Start rsyslog to generate logs
+      systemctl start rsyslog
+      systemctl enable rsyslog
+      
+      # Generate some normal log activity
+      logger "Normal system activity - service started"
+      logger "User login successful"
+      logger "Backup job completed"
+      
+      # Simulate attacker activity that gets logged
+      logger "ATTACKER: Unauthorized sudo access by user hacker"
+      logger "ATTACKER: SSH connection from 203.0.113.66"
+      logger "ATTACKER: File /etc/shadow accessed"
+      logger "ATTACKER: New user 'backdoor' created"
+      logger "ATTACKER: Privilege escalation attempt detected"
+      
+      # Wait for logs to be written
+      sleep 2
+      
+      # Now tamper with the logs
+      # Method 1: Delete specific lines from auth.log
+      if [ -f /var/log/auth.log ]; then
+          cp /var/log/auth.log /tmp/auth.log.backup
+          grep -v "ATTACKER" /var/log/auth.log > /tmp/auth.log.clean || true
+          cat /tmp/auth.log.clean > /var/log/auth.log
+      fi
+      
+      # Method 2: Delete syslog entries
+      if [ -f /var/log/syslog ]; then
+          cp /var/log/syslog /tmp/syslog.backup
+          grep -v "ATTACKER" /var/log/syslog > /tmp/syslog.clean || true
+          cat /tmp/syslog.clean > /var/log/syslog
+      fi
+      
+      # Method 3: Create a deleted-but-open log file scenario
+      # Start a process that keeps a log file open
+      cat > /tmp/keep_log_open.sh << 'LOGKEEPER_EOF'
+      #!/bin/bash
+      # Keep the original syslog backup open
+      exec 3< /tmp/syslog.backup
+      while true; do
+          sleep 3600
+      done
+      LOGKEEPER_EOF
+      
+      chmod +x /tmp/keep_log_open.sh
+      nohup /tmp/keep_log_open.sh > /dev/null 2>&1 &
+      
+      # Wait a moment for the file to be opened
+      sleep 1
+      
+      # Now "delete" the backup (but it's still open)
+      rm /tmp/syslog.backup
+      
+      # Add evidence in bash history
+      cat >> /root/.bash_history << 'HISTORY_EOF'
+      grep -v "unauthorized" /var/log/auth.log > /tmp/clean.log
+      cat /tmp/clean.log > /var/log/auth.log
+      rm /tmp/clean.log
+      shred -u /var/log/auth.log.1
+      HISTORY_EOF
+      
+      # Modify file timestamps to look less suspicious
+      touch -t 202602140300 /var/log/auth.log
+      touch -t 202602140300 /var/log/syslog
+      
+      # But journalctl still has the evidence
+      # The attacker forgot about systemd journal
+      
+      # Create some post-tampering activity
+      logger "System resumed normal operation"
+      logger "Scheduled maintenance completed"
+      
+      # Leave a clue - wtmp wasn't cleaned
+      # Simulate a login from the attacker's IP
+      echo "attacker pts/1 203.0.113.66 $(date -d '1 hour ago' '+%a %b %d %H:%M') still logged in" >> /var/log/wtmp.fake
+      
+      echo "Logs tampered - evidence hidden"
+
+portForwards: []

@@ -142,6 +142,9 @@ get_all_incidents() {
   echo "019:security:Leaked API key:Intermediate"
   echo "037:forensics:Rootkit detection:Advanced"
   echo "038:forensics:Backdoor user account:Intermediate"
+  echo "039:forensics:Cryptominer investigation:Intermediate-Advanced"
+  echo "040:forensics:Log tampering:Intermediate"
+  echo "041:forensics:Reverse shell discovery:Intermediate"
 }
 
 # Get incidents by difficulty

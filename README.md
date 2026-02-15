@@ -2,6 +2,8 @@
   <img src="docs/img/logo.png" alt="RamOps" width="400">
 </p>
 
+Disclaimer: The incidents are under construction, this is a hobby project and some incidents may not be 100% complete yet. 
+Also , always run anything at your own risk. 
 # Ram Ops 
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
