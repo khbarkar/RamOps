@@ -19,10 +19,22 @@ echo ""
 echo "Starting VM with Lima..."
 limactl start --tty=false "$SCENARIO_DIR/lima-terraform-drift.yaml"
 
+echo "Waiting for provisioning to complete..."
+sleep 30
+
+echo "Verifying setup..."
+if limactl shell lima-terraform-drift test -d /opt/terraform; then
+  echo "[ok] Terraform directory created"
+else
+  echo "WARN: /opt/terraform not found, provisioning may have failed"
+  echo "Check logs with: limactl shell lima-terraform-drift journalctl -xe"
+fi
+
 echo ""
 echo "============================================"
 echo "  SCENARIO: Infrastructure Drift Detection"
 echo "  SETUP COMPLETE"
 echo ""
+echo "  Terraform project: /opt/terraform"
 echo "  SSH: limactl shell lima-terraform-drift"
 echo "============================================"
