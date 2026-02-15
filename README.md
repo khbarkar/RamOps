@@ -6,6 +6,8 @@
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
 
+**Note:** VM-based scenarios (Lima) are currently tested on Apple Silicon (ARM) Macs only. Other architectures may require configuration adjustments.
+
 ## Quick Start
 
 **Interactive TUI (Recommended):**
