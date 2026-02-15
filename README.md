@@ -2,8 +2,19 @@
   <img src="docs/img/logo.png" alt="RamOps" width="400">
 </p>
 
-Disclaimer: The incidents are under construction, this is a hobby project and some incidents may not be 100% complete yet. 
-Also , always run anything at your own risk. 
+## ⚠️ Disclaimer
+
+**FOR EDUCATIONAL USE ONLY.** This project contains simulated security incidents, malware, and system compromises for training purposes. 
+
+- **NEVER** run on production systems
+- **NEVER** use on systems you don't own
+- Only use in isolated training environments
+- See [DISCLAIMER.md](DISCLAIMER.md) for full legal and security warnings
+
+**You are responsible for any consequences of misuse. Unauthorized access to computer systems is illegal.**
+
+---
+
 # Ram Ops 
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
