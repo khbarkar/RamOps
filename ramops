@@ -367,7 +367,7 @@ check_incident_deps() {
     fi
     
     # Check socket_vmnet for multi-VM scenarios
-    if [[ "$category" == "kafka" ]] && [ ! -f "/opt/socket_vmnet/bin/socket_vmnet" ]; then
+    if [[ "$category" == "kafka" ]] && ! command -v socket_vmnet &> /dev/null; then
       clear
       echo -e "${ORANGE}Multi-VM scenarios require socket_vmnet.${NC}"
       echo ""
