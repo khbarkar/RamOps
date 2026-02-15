@@ -126,17 +126,17 @@ do_update() {
 
 # Get all incidents with full info
 get_all_incidents() {
-  echo "001:kubernetes:Production pod crash-looping:Beginner"
-  echo "002:kubernetes:Node goes NotReady:Beginner"
+  echo "001:kubernetes:Pod crash-looping:Beginner"
+  echo "002:kubernetes:Node NotReady:Beginner"
   echo "003:kubernetes:DNS outage:Intermediate"
-  echo "004:kubernetes:Storage volume full:Beginner-Intermediate"
+  echo "004:kubernetes:Storage full:Beginner-Intermediate"
   echo "005:kafka:Disk-bound:Intermediate"
   echo "006:kafka:Network-bound:Intermediate-Advanced"
-  echo "007:deployment:Hard link deployment trap:Intermediate-Advanced"
-  echo "008:kubernetes:HTTPS certificate errors:Intermediate"
+  echo "007:deployment:Hard link trap:Intermediate-Advanced"
+  echo "008:kubernetes:HTTPS cert errors:Intermediate"
   echo "009:kubernetes:Memory leak:Intermediate"
   echo "010:kubernetes:Exposed credentials:Beginner-Intermediate"
-  echo "011:terraform:Infrastructure drift:Intermediate"
+  echo "011:terraform:Drift detection:Intermediate"
   echo "012:observability:Alert storm:Intermediate-Advanced"
 }
 
@@ -382,6 +382,13 @@ check_incident_deps() {
             if command -v brew &> /dev/null; then
               brew install socket_vmnet
               echo ""
+              echo -e "${ORANGE}Configuring Lima to use socket_vmnet...${NC}"
+              mkdir -p ~/.lima/_config
+              cat > ~/.lima/_config/override.yaml <<'EOF'
+vmnet:
+  socketVMNet: /opt/homebrew/opt/socket_vmnet/bin/socket_vmnet
+EOF
+              echo ""
               echo -e "${ORANGE}Starting socket_vmnet service (requires sudo)...${NC}"
               sudo brew services start socket_vmnet
               echo ""
@@ -430,25 +437,25 @@ run_action() {
   case $action in
     0) # Setup
       if [ -f "setup-lima.sh" ]; then
-        ./setup-lima.sh
+        bash setup-lima.sh || true
       else
-        ./setup.sh
+        bash setup.sh || true
       fi
       ;;
     1) # Verify
       if [ -f "verify-lima.sh" ]; then
-        ./verify-lima.sh
+        bash verify-lima.sh || true
       elif [ -f "verify.sh" ]; then
-        ./verify.sh
+        bash verify.sh || true
       else
         echo -e "${GRAY}No verify script available${NC}"
       fi
       ;;
     2) # Teardown
       if [ -f "teardown-lima.sh" ]; then
-        ./teardown-lima.sh
+        bash teardown-lima.sh || true
       else
-        ./teardown.sh
+        bash teardown.sh || true
       fi
       ;;
     3) # View README
