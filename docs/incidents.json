@@ -33,6 +33,61 @@
     "path": "incidents/observability/incident-012"
   },
   {
+    "id": "incidents/forensics/incident-041",
+    "title": "Incident 041",
+    "description": "Your network monitoring detected an unusual outbound connection from a production server to an external IP on port 4444. The connection has been active for 3 days. When you check the server, everythin...",
+    "difficulty": "Intermediate",
+    "skills": [],
+    "technologies": [
+      "Forensics"
+    ],
+    "path": "incidents/forensics/incident-041"
+  },
+  {
+    "id": "incidents/forensics/incident-040",
+    "title": "Incident 040",
+    "description": "Your security team received an alert about a potential breach last night at 2:47 AM. When you check the logs to investigate, you find gaps in the timeline. Auth logs show normal activity, then suddenl...",
+    "difficulty": "Intermediate",
+    "skills": [],
+    "technologies": [
+      "Forensics"
+    ],
+    "path": "incidents/forensics/incident-040"
+  },
+  {
+    "id": "incidents/forensics/incident-038",
+    "title": "Incident 038",
+    "description": "Your security team received an alert about unusual sudo activity at 3am. When you check the server, you notice SSH sessions from IP addresses you don't recognize. The application team swears they didn...",
+    "difficulty": "Intermediate",
+    "skills": [],
+    "technologies": [
+      "Forensics"
+    ],
+    "path": "incidents/forensics/incident-038"
+  },
+  {
+    "id": "incidents/forensics/incident-039",
+    "title": "Incident 039",
+    "description": "Your cloud bill tripled this month. The finance team is asking questions. When you check the servers, CPU usage is at 95% constantly, but when you run `top` or `htop`, you only see normal processes us...",
+    "difficulty": "Intermediate-Advanced",
+    "skills": [],
+    "technologies": [
+      "Forensics"
+    ],
+    "path": "incidents/forensics/incident-039"
+  },
+  {
+    "id": "incidents/forensics/incident-037",
+    "title": "Incident 037",
+    "description": "Your monitoring system shows unusual CPU spikes and network traffic, but when you SSH into the server and run `ps`, `top`, and `netstat`, everything looks normal. A few processes are running, but noth...",
+    "difficulty": "Advanced",
+    "skills": [],
+    "technologies": [
+      "Forensics"
+    ],
+    "path": "incidents/forensics/incident-037"
+  },
+  {
     "id": "incidents/sysadmin/incident-014",
     "title": "Incident 014",
     "description": "Production alerts wake you at 2am: \"10,000+ zombie processes detected\". The application server is sluggish. New processes are failing to spawn with \"fork: Resource temporarily unavailable\". The monito...",
