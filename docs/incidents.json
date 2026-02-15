@@ -13,7 +13,7 @@
   {
     "id": "incidents/security/incident-019",
     "title": "Incident 019",
-    "description": "Your security team discovered that an API key was leaked in a public Docker image. The developer claims they deleted it with `RUN rm -rf /tmp/*` in the Dockerfile, but the secret is still extractable ...",
+    "description": "Your security team received an alert: someone has been using a leaked API key to access your production systems. After investigation, they traced it back to a container image running in your Kubernete...",
     "difficulty": "Intermediate",
     "skills": [],
     "technologies": [

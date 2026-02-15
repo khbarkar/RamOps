@@ -1,14 +1,14 @@
-# Secrets Leaked in Image Layers
+# Leaked API Key
 
 **Difficulty:** Intermediate
-**Category:** Container Security
+**Category:** Security
 **Time estimate:** 20-25 minutes
 
 ## Scenario
 
-Your security team discovered that an API key was leaked in a public Docker image. The developer claims they deleted it with `RUN rm -rf /tmp/*` in the Dockerfile, but the secret is still extractable from the image layers.
+Your security team received an alert: someone has been using a leaked API key to access your production systems. After investigation, they traced it back to a container image running in your Kubernetes cluster.
 
-An attacker pulled your image from Docker Hub and extracted the API key from layer 5. They've been using it to access your production API for the past week.
+An attacker somehow extracted the API key from the image and has been using it for unauthorized access. The image was pulled from your container registry. You need to perform forensic analysis on the image to understand how the secret was leaked and prevent this from happening again.
 
 ## Prerequisites
 
@@ -26,21 +26,26 @@ This creates a Kind cluster and builds a vulnerable container image with secrets
 
 ## Your Task
 
-1. Inspect the vulnerable image and find the leaked secret
-2. Understand why deleting files doesn't remove them from layers
-3. Rebuild the image securely without leaking secrets
-4. Verify the secret is not extractable from the new image
-5. Run `./verify.sh` to confirm
+1. Check what's running in the cluster: `kubectl get pods -n security-demo`
+2. Investigate how the attacker extracted the API key from the container image
+3. Create a secure version that doesn't leak secrets
+4. Run `./verify.sh` to confirm your fix works
 
 ## Hints
 
-Hint 1: Use docker history IMAGE_NAME to see all layers and commands
+Hint 1: Check what image is running in the deployment. The image is already loaded in your local Docker from the setup.
 
-Hint 2: Use docker history --no-trunc IMAGE_NAME to see full commands including secrets
+Hint 2: List your local Docker images with `docker images` to find the vulnerable image.
 
-Hint 3: Layers are immutable - deleting a file in a later layer doesn't remove it from earlier layers
+Hint 3: Export the image to inspect its layers: `docker save IMAGE_NAME -o image.tar` then `tar -xf image.tar`
 
-Hint 4: Use multi-stage builds or BuildKit secrets to avoid leaking secrets in any layer
+Hint 4: Each layer is a tar file. Extract them and look for files containing secrets. Or use `docker history --no-trunc IMAGE_NAME` to see what commands created each layer.
+
+Hint 5: Look for the API_KEY in the layer history or extracted files. Even if a file was deleted in a later layer, it still exists in the layer where it was created.
+
+Hint 6: Docker layers are immutable. Deleting a file with `RUN rm` doesn't remove it from previous layers - it just marks it as deleted in the current layer.
+
+Hint 7: To fix this, rebuild the image using multi-stage builds where secrets are only in the build stage and never make it to the final image. Check `Dockerfile.secure` for an example.
 
 ## Cleanup
 

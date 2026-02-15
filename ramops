@@ -139,7 +139,7 @@ get_all_incidents() {
   echo "012:observability:Alert storm:Intermediate-Advanced"
   echo "013:sysadmin:Vanishing logs:Beginner-Intermediate"
   echo "014:sysadmin:Zombie apocalypse:Intermediate-Advanced"
-  echo "019:security:Secrets in layers:Intermediate"
+  echo "019:security:Leaked API key:Intermediate"
 }
 
 # Get incidents by difficulty

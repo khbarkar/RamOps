@@ -23,13 +23,10 @@ provision:
       mv terraform /usr/local/bin/
       rm terraform_${TERRAFORM_VERSION}_linux_arm64.zip
       
-      mkdir -p /tmp/managed-resources
-      chown ubuntu:ubuntu /tmp/managed-resources
-      
-      echo "Terraform installed: $(terraform version)"
+      LIMA_USER=$(stat -c '%U:%G' /home/*)
       
       mkdir -p /opt/terraform /tmp/managed-resources
-      chown -R ubuntu:ubuntu /opt/terraform /tmp/managed-resources
+      chown -R $LIMA_USER /opt/terraform /tmp/managed-resources
       cd /opt/terraform
       
       echo 'resource "local_file" "config" {' > main.tf
@@ -52,15 +49,11 @@ provision:
       echo '  EOT' >> main.tf
       echo '}' >> main.tf
       
-      chown -R ubuntu:ubuntu /opt/terraform
-      
       terraform init
       terraform apply -auto-approve
       
       echo '{"app_name":"production-api","version":"2.0.0","replicas":5,"enabled":true}' > /tmp/managed-resources/app-config.json
       sed -i 's/max_connections=100/max_connections=50/' /tmp/managed-resources/database.conf
-      
-      chown -R ubuntu:ubuntu /opt/terraform /tmp/managed-resources
       
       echo "Drift scenario created - check /opt/terraform"
 
