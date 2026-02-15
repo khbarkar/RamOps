@@ -10,25 +10,36 @@ echo ""
 ARCH=$(uname -m)
 if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
   echo "Detected ARM architecture (Apple Silicon)"
-  VM_PROVIDER="vmware_desktop"
 
-  # Check if VMware Fusion is installed
-  if ! command -v vmrun &> /dev/null; then
+  # Check for QEMU first (free and works well)
+  if vagrant plugin list | grep -q vagrant-qemu; then
+    echo "Using QEMU provider"
+    VM_PROVIDER="qemu"
+  # Then check for VMware
+  elif command -v vmrun &> /dev/null && vagrant plugin list | grep -q vagrant-vmware-desktop; then
+    echo "Using VMware Fusion provider"
+    VM_PROVIDER="vmware_desktop"
+  # Then check for Parallels
+  elif command -v prlctl &> /dev/null && vagrant plugin list | grep -q vagrant-parallels; then
+    echo "Using Parallels provider"
+    VM_PROVIDER="parallels"
+  else
     echo ""
-    echo "VMware Fusion is required for ARM Macs."
-    echo "Install with:"
+    echo "No compatible VM provider found for ARM Mac."
+    echo ""
+    echo "Install one of the following:"
+    echo ""
+    echo "Option 1 (Recommended - Free):"
+    echo "  brew install qemu"
+    echo "  vagrant plugin install vagrant-qemu"
+    echo ""
+    echo "Option 2 (Commercial):"
     echo "  brew install --cask vmware-fusion"
     echo "  vagrant plugin install vagrant-vmware-desktop"
     echo ""
-    exit 1
-  fi
-
-  # Check if Vagrant VMware plugin is installed
-  if ! vagrant plugin list | grep -q vagrant-vmware-desktop; then
-    echo ""
-    echo "Vagrant VMware plugin is required."
-    echo "Install with:"
-    echo "  vagrant plugin install vagrant-vmware-desktop"
+    echo "Option 3 (Commercial):"
+    echo "  brew install --cask parallels"
+    echo "  vagrant plugin install vagrant-parallels"
     echo ""
     exit 1
   fi

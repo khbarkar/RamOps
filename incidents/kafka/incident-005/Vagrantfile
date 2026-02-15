@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
       qe.ssh_port = 50022
       qe.arch = "aarch64"
       qe.machine = "virt,accel=hvf,highmem=off"
-      qe.cpu = "cortex-a72"
+      qe.cpu = "max"
       qe.net_device = "virtio-net-pci"
     end
 
@@ -48,6 +48,16 @@ Vagrant.configure("2") do |config|
     broker.vm.hostname = "kafka2"
     broker.vm.network "private_network", ip: "192.168.56.12"
 
+    broker.vm.provider "qemu" do |qe|
+      qe.memory = "2048"
+      qe.cpus = 2
+      qe.ssh_port = 50023
+      qe.arch = "aarch64"
+      qe.machine = "virt,accel=hvf,highmem=off"
+      qe.cpu = "max"
+      qe.net_device = "virtio-net-pci"
+    end
+
     broker.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"
       vb.cpus = 2
@@ -71,6 +81,16 @@ Vagrant.configure("2") do |config|
   config.vm.define "kafka3" do |broker|
     broker.vm.hostname = "kafka3"
     broker.vm.network "private_network", ip: "192.168.56.13"
+
+    broker.vm.provider "qemu" do |qe|
+      qe.memory = "2048"
+      qe.cpus = 2
+      qe.ssh_port = 50024
+      qe.arch = "aarch64"
+      qe.machine = "virt,accel=hvf,highmem=off"
+      qe.cpu = "max"
+      qe.net_device = "virtio-net-pci"
+    end
 
     broker.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"
@@ -97,6 +117,16 @@ Vagrant.configure("2") do |config|
     mon.vm.network "private_network", ip: "192.168.56.20"
     mon.vm.network "forwarded_port", guest: 3000, host: 3000  # Grafana
     mon.vm.network "forwarded_port", guest: 9090, host: 9090  # Prometheus
+
+    mon.vm.provider "qemu" do |qe|
+      qe.memory = "2048"
+      qe.cpus = 1
+      qe.ssh_port = 50025
+      qe.arch = "aarch64"
+      qe.machine = "virt,accel=hvf,highmem=off"
+      qe.cpu = "max"
+      qe.net_device = "virtio-net-pci"
+    end
 
     mon.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"

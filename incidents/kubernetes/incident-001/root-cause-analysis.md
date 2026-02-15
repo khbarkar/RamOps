@@ -1,3 +1,11 @@
+---
+title: "Production pod crash-looping"
+difficulty: Beginner
+skills: [Debugging, Troubleshooting]
+technologies: [Kubernetes, Docker]
+description: "Users reporting site is down due to pods stuck in CrashLoopBackOff from misconfigured liveness probe"
+---
+
 # Solution: Single Pod Crashloop
 
 ## Root Cause

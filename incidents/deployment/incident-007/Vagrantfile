@@ -23,6 +23,16 @@ Vagrant.configure("2") do |config|
       vb.name = "ramops-hardlink"
     end
 
+    server.vm.provider "qemu" do |qe|
+      qe.memory = "1024"
+      qe.cpus = 1
+      qe.ssh_port = 50022
+      qe.arch = "aarch64"
+      qe.machine = "virt,accel=hvf,highmem=off"
+      qe.cpu = "max"
+      qe.net_device = "virtio-net-pci"
+    end
+
     server.vm.provision "shell", path: "scripts/provision.sh"
   end
 end

@@ -1,0 +1,143 @@
+[
+  {
+    "id": "incidents/terraform/incident-011",
+    "title": "Incident 011",
+    "description": "Solution: Infrastructure Drift Detection Root Cause **Infrastructure drift** occurred when someone m...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Terraform"
+    ],
+    "path": "incidents/terraform/incident-011"
+  },
+  {
+    "id": "incidents/observability/incident-012",
+    "title": "Incident 012",
+    "description": "Solution: Alert Storm from Single Root Cause Root Cause A **single infrastructure failure** (databas...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Observability"
+    ],
+    "path": "incidents/observability/incident-012"
+  },
+  {
+    "id": "incidents/kafka/incident-006",
+    "title": "Incident 006",
+    "description": "Solution: Kafka Network-Bound Brokers Root Cause Kafka brokers are throttled to **50 Mbit/s network ...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kafka"
+    ],
+    "path": "incidents/kafka/incident-006"
+  },
+  {
+    "id": "incidents/kafka/incident-005",
+    "title": "Kafka cluster experiencing high latency and consumer lag",
+    "description": "Kafka brokers showing high latency and growing consumer lag due to disk I/O bottleneck",
+    "difficulty": "Intermediate",
+    "skills": [
+      "Troubleshooting",
+      "Investigation"
+    ],
+    "technologies": [
+      "Kafka",
+      "Grafana",
+      "Linux"
+    ],
+    "path": "incidents/kafka/incident-005"
+  },
+  {
+    "id": "incidents/deployment/incident-007",
+    "title": "Incident 007",
+    "description": "Solution: Hard Link Deployment Trap What Happened The deployment system used **hard links** to rotat...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Deployment"
+    ],
+    "path": "incidents/deployment/incident-007"
+  },
+  {
+    "id": "incidents/kubernetes/incident-009",
+    "title": "Incident 009",
+    "description": "Solution: Memory Leak in Production Root Cause The `data-processor` application has a **memory leak*...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-009"
+  },
+  {
+    "id": "incidents/kubernetes/incident-001",
+    "title": "Production pod crash-looping",
+    "description": "Users reporting site is down due to pods stuck in CrashLoopBackOff from misconfigured liveness probe",
+    "difficulty": "Beginner",
+    "skills": [
+      "Debugging",
+      "Troubleshooting"
+    ],
+    "technologies": [
+      "Kubernetes",
+      "Docker"
+    ],
+    "path": "incidents/kubernetes/incident-001"
+  },
+  {
+    "id": "incidents/kubernetes/incident-008",
+    "title": "Incident 008",
+    "description": "Root Cause Analysis: Incident-008 Summary **Incident:** HTTPS connections failing with certificate e...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-008"
+  },
+  {
+    "id": "incidents/kubernetes/incident-010",
+    "title": "Incident 010",
+    "description": "Solution: Exposed Database Credentials Root Cause Sensitive credentials (database passwords, API key...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-010"
+  },
+  {
+    "id": "incidents/kubernetes/incident-004",
+    "title": "Incident 004",
+    "description": "Root Cause Analysis: Incident-004 Summary **Incident:** Application pod crash-looping with write err...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-004"
+  },
+  {
+    "id": "incidents/kubernetes/incident-003",
+    "title": "Incident 003",
+    "description": "Solution: DNS Outage Diagnosis Steps 1. Check CoreDNS Pod Status ```bash kubectl get pods -n kube-sy...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-003"
+  },
+  {
+    "id": "incidents/kubernetes/incident-002",
+    "title": "Incident 002",
+    "description": "Solution: Node Goes NotReady Root Cause One of the worker nodes has been **paused at the Docker leve...",
+    "difficulty": "Not Rated",
+    "skills": [],
+    "technologies": [
+      "Kubernetes"
+    ],
+    "path": "incidents/kubernetes/incident-002"
+  }
+]

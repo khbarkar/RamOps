@@ -1,3 +1,11 @@
+---
+title: "Kafka cluster experiencing high latency and consumer lag"
+difficulty: Intermediate
+skills: [Troubleshooting, Investigation]
+technologies: [Kafka, Grafana, Linux]
+description: "Kafka brokers showing high latency and growing consumer lag due to disk I/O bottleneck"
+---
+
 # Solution: Kafka Disk-Bound Brokers
 
 ## Root Cause
