@@ -1,0 +1,30 @@
+name: terraform-drift
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname terraform-drift
+      apt-get update
+      apt-get install -y wget unzip
+      
+      # Install Terraform
+      TERRAFORM_VERSION="1.7.0"
+      wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_arm64.zip
+      unzip -q terraform_${TERRAFORM_VERSION}_linux_arm64.zip
+      mv terraform /usr/local/bin/
+      rm terraform_${TERRAFORM_VERSION}_linux_arm64.zip
+      
+      mkdir -p /tmp/managed-resources
+      chown ubuntu:ubuntu /tmp/managed-resources
+      
+      echo "Terraform installed: $(terraform version)"

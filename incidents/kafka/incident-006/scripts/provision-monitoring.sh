@@ -53,6 +53,8 @@ systemctl enable prometheus
 systemctl start prometheus
 
 # Install Grafana
+# Remove old key if it exists
+apt-key del 963FA27710458545 2>/dev/null || true
 wget -q -O /usr/share/keyrings/grafana.gpg https://apt.grafana.com/gpg.key
 echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
 apt-get update

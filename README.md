@@ -6,6 +6,19 @@
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
 
+## Quick Start
+
+**Interactive TUI (Recommended):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/khbarkar/openRam/main/install.sh | bash
+ramops
+```
+
+Or run directly:
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/khbarkar/openRam/main/ramops)
+```
+
 ## Incidents
 
 | Incident | Description | Root Cause Analysis |

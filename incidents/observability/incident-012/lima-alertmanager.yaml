@@ -1,0 +1,127 @@
+name: alertmanager
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "4GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname alertmanager
+      apt-get update
+      apt-get install -y wget curl postgresql
+      
+      # Install Prometheus
+      PROM_VERSION="2.48.0"
+      wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-arm64.tar.gz
+      tar xzf prometheus-${PROM_VERSION}.linux-arm64.tar.gz
+      cp prometheus-${PROM_VERSION}.linux-arm64/prometheus /usr/local/bin/
+      cp prometheus-${PROM_VERSION}.linux-arm64/promtool /usr/local/bin/
+      mkdir -p /etc/prometheus /var/lib/prometheus
+      rm -rf prometheus-${PROM_VERSION}.linux-arm64*
+      
+      # Install Alertmanager
+      AM_VERSION="0.26.0"
+      wget -q https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-arm64.tar.gz
+      tar xzf alertmanager-${AM_VERSION}.linux-arm64.tar.gz
+      cp alertmanager-${AM_VERSION}.linux-arm64/alertmanager /usr/local/bin/
+      cp alertmanager-${AM_VERSION}.linux-arm64/amtool /usr/local/bin/
+      mkdir -p /etc/alertmanager /var/lib/alertmanager
+      rm -rf alertmanager-${AM_VERSION}.linux-arm64*
+      
+      # Configure Prometheus with alert rules
+      cat > /etc/prometheus/prometheus.yml <<'EOF'
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+EOF
+      
+      # Create alert rules
+      cat > /etc/prometheus/alert.rules.yml <<'EOF'
+groups:
+  - name: infrastructure
+    interval: 5s
+    rules:
+      - alert: DatabaseDiskFull
+        expr: up{job="prometheus"} == 1
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database disk is full"
+EOF
+      
+      # Configure Alertmanager
+      cat > /etc/alertmanager/alertmanager.yml <<'EOF'
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'default'
+  group_wait: 1s
+  group_interval: 1s
+  repeat_interval: 5m
+
+receivers:
+  - name: 'default'
+EOF
+      
+      # Create systemd services
+      cat > /etc/systemd/system/prometheus.service <<'EOF'
+[Unit]
+Description=Prometheus
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      
+      cat > /etc/systemd/system/alertmanager.service <<'EOF'
+[Unit]
+Description=Alertmanager
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      
+      systemctl daemon-reload
+      systemctl enable prometheus alertmanager
+      systemctl start prometheus alertmanager
+      
+      echo "Monitoring stack provisioned"
+
+portForwards:
+  - guestPort: 9090
+    hostPort: 9090
+  - guestPort: 9093
+    hostPort: 9093

@@ -1,0 +1,73 @@
+name: kafka3
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+networks:
+  - lima: shared
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname kafka3
+      apt-get update
+      apt-get install -y openjdk-17-jre-headless wget
+      
+      KAFKA_VERSION="3.6.0"
+      SCALA_VERSION="2.13"
+      cd /opt
+      wget -q https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+      tar xzf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+      ln -s kafka_${SCALA_VERSION}-${KAFKA_VERSION} kafka
+      rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+      
+      useradd -r -s /bin/false kafka || true
+      mkdir -p /var/lib/kafka/data
+      chown -R kafka:kafka /var/lib/kafka
+      chown -R kafka:kafka /opt/kafka*
+      
+      cat > /opt/kafka/config/server.properties <<'EOF'
+broker.id=3
+listeners=PLAINTEXT://0.0.0.0:9092
+advertised.listeners=PLAINTEXT://192.168.5.13:9092
+log.dirs=/var/lib/kafka/data
+num.partitions=8
+log.retention.hours=1
+zookeeper.connect=192.168.5.20:2181
+EOF
+      
+      cat > /etc/systemd/system/kafka.service <<'EOF'
+[Unit]
+Description=Apache Kafka
+After=network.target
+
+[Service]
+Type=simple
+User=kafka
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      
+      cat > /etc/systemd/system/kafka.service.d/io-limit.conf <<'EOF'
+[Service]
+IOWriteBandwidthMax=/var/lib/kafka 10M
+EOF
+      
+      systemctl daemon-reload
+      systemctl enable kafka
+      
+      echo "Kafka broker 3 provisioned"
+
+portForwards:
+  - guestPort: 9092
+    hostPort: 9094

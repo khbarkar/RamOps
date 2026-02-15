@@ -112,7 +112,7 @@ function renderIncidents() {
     noResults.style.display = 'none';
 
     grid.innerHTML = filtered.map(incident => `
-        <a href="https://github.com/kristinb/hrutur/tree/main/${incident.path}" class="incident-card fade-in" target="_blank">
+        <a href="https://github.com/khbarkar/openRam/tree/main/${incident.path}" class="incident-card fade-in" target="_blank">
             <h2>${escapeHtml(incident.title)}</h2>
             <p class="description">${escapeHtml(incident.description)}</p>
             <div class="tags">
