@@ -1,0 +1,21 @@
+FROM alpine:3.18
+
+# Install curl
+RUN apk add --no-cache curl
+
+# VULNERABLE: Secret is exposed in this layer
+ARG API_KEY=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
+
+# Fetch data using the secret (common pattern)
+RUN curl -H "Authorization: Bearer ${API_KEY}" \
+    https://api.example.com/data > /tmp/data.json
+
+# Developer thinks this removes the secret - IT DOESN'T!
+RUN rm -rf /tmp/*
+
+# Add application code
+COPY app.sh /app/app.sh
+RUN chmod +x /app/app.sh
+
+WORKDIR /app
+CMD ["/app/app.sh"]

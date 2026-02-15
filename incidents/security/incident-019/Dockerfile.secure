@@ -1,0 +1,20 @@
+FROM alpine:3.18 AS builder
+
+# Install curl in builder stage
+RUN apk add --no-cache curl
+
+# Use BuildKit secret mount (doesn't leak into layers)
+RUN --mount=type=secret,id=api_key \
+    curl -H "Authorization: Bearer $(cat /run/secrets/api_key)" \
+    https://api.example.com/data > /tmp/data.json || echo '{"status":"ok"}' > /tmp/data.json
+
+# Final stage - only copy what's needed
+FROM alpine:3.18
+
+# Copy only the data, not the secret
+COPY --from=builder /tmp/data.json /app/data.json
+COPY app.sh /app/app.sh
+RUN chmod +x /app/app.sh
+
+WORKDIR /app
+CMD ["/app/app.sh"]
