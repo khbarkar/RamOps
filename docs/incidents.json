@@ -46,7 +46,7 @@
   {
     "id": "incidents/sysadmin/incident-013",
     "title": "Incident 013",
-    "description": "Alerts fire at 3am: disk usage on the log filesystem is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were \"deleted\" hours ago. But the disk space was never...",
+    "description": "Alerts fire at 3am: disk usage on the server is at 95%. You check the logs directory and see the log rotation ran successfully - old logs were \"deleted\" hours ago. But the disk space was never freed. ...",
     "difficulty": "Beginner-Intermediate",
     "skills": [],
     "technologies": [

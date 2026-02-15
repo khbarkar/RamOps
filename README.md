@@ -52,19 +52,10 @@ Each scenario is self-contained with its own setup, verification, and teardown s
 
 **Prerequisites:**
 - **Kubernetes scenarios**: [Kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/), Docker
-- **VM-based scenarios** (Kafka, Deployment, Terraform):
-  - [Vagrant](https://www.vagrantup.com/downloads) >= 2.0
-  - **Apple Silicon (ARM) Macs - Choose ONE:**
-    - **QEMU (FREE, recommended):**
-      ```bash
-      brew install qemu
-      vagrant plugin install vagrant-qemu
-      ```
-    - **VMware Fusion** (free, requires Broadcom account)
-    - **Parallels Desktop** (14-day trial)
-  - **Intel Macs / Linux / Windows:**
-    - [VirtualBox](https://www.virtualbox.org/) >= 6.0
-  - Python 3 with `kafka-python` (for Kafka scenarios only)
+- **VM-based scenarios** (Sysadmin, Observability, Terraform, Deployment):
+  - [Lima](https://lima-vm.io/) for lightweight Linux VMs
+  - 4GB+ RAM free
+- **Kafka scenarios**: [Kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/), Docker
 
 
 ```bash
