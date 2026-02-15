@@ -1,0 +1,66 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: etcd-partition
+  namespace: etcd-system
+spec:
+  podSelector:
+    matchLabels:
+      app: etcd
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: etcd
+    ports:
+    - protocol: TCP
+      port: 2379
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: etcd
+    ports:
+    - protocol: TCP
+      port: 2379
+---
+# Partition etcd-1 from etcd-0 and etcd-2 (peer port 2380)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: partition-etcd-1
+  namespace: etcd-system
+spec:
+  podSelector:
+    matchLabels:
+      app: etcd
+      statefulset.kubernetes.io/pod-name: etcd-1
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: etcd
+    ports:
+    - protocol: TCP
+      port: 2379
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: etcd
+    ports:
+    - protocol: TCP
+      port: 2379
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53

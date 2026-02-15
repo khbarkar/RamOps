@@ -265,6 +265,12 @@ def generate_html():
         </div>
     </main>
 
+    <footer style="text-align: center; padding: 40px 20px; color: #666; font-size: 14px;">
+        <a href="https://www.buymeacoffee.com/YOUR_USERNAME" target="_blank" style="text-decoration: none;">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" style="height: 40px; opacity: 0.7; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+        </a>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>

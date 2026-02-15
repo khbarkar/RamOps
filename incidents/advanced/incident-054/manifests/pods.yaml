@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: victim
+  labels:
+    app: victim
+spec:
+  containers:
+  - name: victim
+    image: ubuntu:22.04
+    command: ["/bin/bash", "-c"]
+    args:
+    - |
+      apt-get update && apt-get install -y stress-ng
+      # Simulate a process with secrets in memory
+      export SECRET_API_KEY="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"
+      while true; do
+        # Access memory containing secret
+        echo $SECRET_API_KEY > /dev/null
+        sleep 1
+      done
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "256Mi"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attacker
+  labels:
+    app: attacker
+spec:
+  containers:
+  - name: attacker
+    image: ubuntu:22.04
+    command: ["/bin/bash", "-c"]
+    args:
+    - |
+      apt-get update && apt-get install -y linux-tools-generic stress-ng
+      # Simulate cache timing attack
+      cat > /tmp/cache_attack.sh << 'ATTACK_EOF'
+      #!/bin/bash
+      # Simplified cache timing attack simulation
+      while true; do
+        # Flush cache
+        sync; echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
+        # Probe memory access patterns
+        for i in {1..1000}; do
+          dd if=/dev/zero of=/dev/null bs=4k count=1 2>/dev/null
+        done
+        sleep 0.1
+      done
+      ATTACK_EOF
+      chmod +x /tmp/cache_attack.sh
+      /tmp/cache_attack.sh
+    securityContext:
+      privileged: true
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "256Mi"
