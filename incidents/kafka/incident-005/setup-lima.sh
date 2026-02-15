@@ -42,11 +42,10 @@ fi
 if [ ! -f ~/.lima/_config/override.yaml ]; then
   echo "Configuring Lima networking..."
   mkdir -p ~/.lima/_config
-  SOCKET_VMNET_PATH=$(brew --prefix socket_vmnet)/bin/socket_vmnet
-  cat > ~/.lima/_config/override.yaml << EOF
+  cat > ~/.lima/_config/override.yaml << 'EOF'
+vmType: vz
 networks:
   - lima: shared
-    socketVMNet: ${SOCKET_VMNET_PATH}
 EOF
 fi
 
