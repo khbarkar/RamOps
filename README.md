@@ -6,15 +6,17 @@
 
 Incident simulation and training scenarios for Kubernetes and cloud infrastructure teams. Practice responding to outages, security breaches, chaos engineering events, and misconfigurations in a safe environment.
 
-## Scenarios
+## Incidents
 
-| Directory | Description |
-|-----------|-------------|
-| `kubernetes/single-pod-crashloop` | A pod is stuck in CrashLoopBackOff — diagnose and fix it |
-| `kubernetes/node-not-ready` | A cluster node has gone NotReady — find it and bring it back |
-| `kafka/disk-bound-brokers` | Kafka brokers bottlenecked by slow disk I/O (VMs + Grafana) |
-| `kafka/network-bound-brokers` | Kafka brokers bottlenecked by network bandwidth cap (VMs + Grafana) |
-| `deployment/hard-link-trap` | Config rollback fails due to hard link inode semantics (VMs) |
+| Incident | Description | Root Cause Analysis |
+|----------|-------------|---------------------|
+| `kubernetes/incident-001` | Production pod crash-looping — users reporting site is down | [RCA](kubernetes/incident-001/root-cause-analysis.md) |
+| `kubernetes/incident-002` | Cluster node unresponsive — workloads not scheduling | [RCA](kubernetes/incident-002/root-cause-analysis.md) |
+| `kubernetes/incident-003` | Services failing to connect — intermittent resolution failures | [RCA](kubernetes/incident-003/root-cause-analysis.md) |
+| `kubernetes/incident-004` | Application pods failing with write errors | [RCA](kubernetes/incident-004/root-cause-analysis.md) |
+| `kafka/incident-005` | Kafka cluster experiencing high latency and growing consumer lag (VMs + Grafana) | [RCA](kafka/incident-005/root-cause-analysis.md) |
+| `kafka/incident-006` | Kafka performance degraded despite available CPU and disk (VMs + Grafana) | [RCA](kafka/incident-006/root-cause-analysis.md) |
+| `deployment/incident-007` | Config rollback attempted but application still broken (VMs) | [RCA](deployment/incident-007/root-cause-analysis.md) |
 
 ## Getting Started
 
@@ -38,13 +40,10 @@ Each scenario is self-contained with its own setup, verification, and teardown s
 
 
 ```bash
-cd kubernetes/single-pod-crashloop
+cd kubernetes/incident-001
 ./setup.sh      # creates infrastructure and deploys the broken scenario
 # ... debug and fix ...
 ./verify.sh     # checks if your fix works
 ./teardown.sh   # cleans up everything
 ```
 
-## Why "Hrutur"?
-
-**Hrutur** (pronounced roughly "HROO-tur") is Icelandic for **ram** — as in the animal. Rams are known for charging headfirst into obstacles, which is exactly what on-call engineers do at 3 AM. This project helps you practice that headfirst collision in a safe environment, so when a real incident hits, you've already taken the blow.

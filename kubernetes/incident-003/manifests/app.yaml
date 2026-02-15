@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: default
+spec:
+  selector:
+    app: database
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_PASSWORD
+              value: example
+          ports:
+            - containerPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: app
+          image: alpine:3.18
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Install DNS utilities
+              apk add --no-cache bind-tools postgresql-client
+
+              # Loop: try to connect to database via DNS
+              while true; do
+                echo "$(date): Attempting to resolve and connect to database..."
+
+                # First try DNS resolution
+                if nslookup database.default.svc.cluster.local; then
+                  echo "DNS resolution successful"
+
+                  # Try database connection
+                  if pg_isready -h database.default.svc.cluster.local -p 5432 -U postgres; then
+                    echo "Database connection successful"
+                  else
+                    echo "Database connection failed (but DNS worked)"
+                  fi
+                else
+                  echo "ERROR: DNS resolution failed!"
+                fi
+
+                echo "---"
+                sleep 30
+              done
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - nslookup database.default.svc.cluster.local
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3

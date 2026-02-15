@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-processor
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-processor
+  template:
+    metadata:
+      labels:
+        app: log-processor
+    spec:
+      containers:
+        - name: processor
+          image: alpine:3.18
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache coreutils
+
+              echo "Log processor starting..."
+              echo "Writing logs to /data/logs/"
+              mkdir -p /data/logs
+
+              # Generate large log files that fill up the disk
+              counter=0
+              while true; do
+                logfile="/data/logs/app-$(date +%Y%m%d-%H%M%S)-${counter}.log"
+                echo "$(date): Creating log file: $logfile"
+
+                # Write 5MB of log data
+                dd if=/dev/zero of="$logfile" bs=1M count=5 2>/dev/null || {
+                  echo "ERROR: Failed to write log file - No space left on device"
+                  echo "Disk usage:"
+                  df -h /data
+                  echo "Attempting to continue..."
+                  sleep 5
+                  # Try to write a small file to trigger crash
+                  echo "critical error" > /data/crash.log || exit 1
+                }
+
+                counter=$((counter + 1))
+
+                # Show disk usage periodically
+                if [ $((counter % 5)) -eq 0 ]; then
+                  echo "Current disk usage:"
+                  df -h /data
+                fi
+
+                sleep 2
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            limits:
+              ephemeral-storage: "100Mi"
+            requests:
+              ephemeral-storage: "50Mi"
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: "50Mi"  # Small limit to fill up quickly
