@@ -300,7 +300,7 @@ body {
 /* Header */
 header {
     background: #000000;
-    border-bottom: 1px solid #333;
+    border-bottom: 2px solid #FF6600;
     padding: 15px 0;
 }
 
@@ -364,9 +364,10 @@ header {
 }
 
 .filter-pill.active {
-    background: #FF0000;
-    color: #FFFFFF;
-    border-color: #FF0000;
+    background: #FF6600;
+    color: #000000;
+    border-color: #FF6600;
+    box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
 }
 
 /* Results Count */
@@ -397,14 +398,15 @@ header {
 }
 
 .incident-card:hover {
-    border-color: #666;
+    border-color: #FF6600;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.2);
 }
 
 .incident-card h2 {
     font-size: 18px;
     margin-bottom: 10px;
-    color: #FFFFFF;
+    color: #FF6600;
 }
 
 .incident-card .description {
@@ -439,7 +441,7 @@ header {
 }
 
 .incident-card .view-link {
-    color: #FF0000;
+    color: #FF6600;
     font-size: 14px;
     font-weight: 500;
 }

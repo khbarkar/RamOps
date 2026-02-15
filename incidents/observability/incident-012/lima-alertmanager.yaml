@@ -52,22 +52,127 @@ provision:
         - job_name: 'prometheus'
           static_configs:
             - targets: ['localhost:9090']
+        - job_name: 'node'
+          static_configs:
+            - targets: ['localhost:9100']
       PROMEOF
       
-      # Create alert rules
+      # Create alert rules - multiple cascading alerts from one root cause
       cat > /etc/prometheus/alert.rules.yml << 'RULEEOF'
       groups:
         - name: infrastructure
           interval: 5s
           rules:
+            # Root cause alert - fires when disk has less than 3GB free
             - alert: DatabaseDiskFull
-              expr: up{job="prometheus"} == 1
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 10s
               labels:
                 severity: critical
+                component: database
+                type: root_cause
               annotations:
                 summary: "Database disk is full"
+            
+            # Symptom alerts (cascade from disk full)
+            - alert: DatabaseConnectionFailed
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: critical
+                component: database
+                type: symptom
+              annotations:
+                summary: "Cannot connect to database"
+            
+            - alert: APILatencyHigh
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: api
+                type: symptom
+              annotations:
+                summary: "API response time > 5s"
+            
+            - alert: CacheMissRateHigh
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: cache
+                type: symptom
+              annotations:
+                summary: "Cache miss rate elevated to 95%"
+            
+            - alert: QueueBacklogGrowing
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: queue
+                type: symptom
+              annotations:
+                summary: "Message queue backlog growing"
+            
+            - alert: ErrorRateSpike
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: critical
+                component: api
+                type: symptom
+              annotations:
+                summary: "Error rate spiked to 45%"
+            
+            - alert: MemoryPressure
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: app
+                type: symptom
+              annotations:
+                summary: "Application memory usage high"
+            
+            - alert: CPUThrottling
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: app
+                type: symptom
+              annotations:
+                summary: "CPU throttling detected"
       RULEEOF
+      
+      # Install and configure node_exporter for filesystem metrics
+      NODE_EXP_VERSION="1.7.0"
+      wget -q https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXP_VERSION}/node_exporter-${NODE_EXP_VERSION}.linux-arm64.tar.gz
+      tar xzf node_exporter-${NODE_EXP_VERSION}.linux-arm64.tar.gz
+      cp node_exporter-${NODE_EXP_VERSION}.linux-arm64/node_exporter /usr/local/bin/
+      rm -rf node_exporter-${NODE_EXP_VERSION}.linux-arm64*
+      
+      cat > /etc/systemd/system/node_exporter.service << 'NODEEOF'
+      [Unit]
+      Description=Node Exporter
+      After=network.target
+      
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/node_exporter
+      Restart=always
+      
+      [Install]
+      WantedBy=multi-user.target
+      NODEEOF
+      
+      systemctl daemon-reload
+      systemctl enable node_exporter
+      systemctl start node_exporter
+      
+      # Wait for node_exporter to start
+      sleep 5
       
       # Configure Alertmanager
       cat > /etc/alertmanager/alertmanager.yml << 'AMEOF'
@@ -117,7 +222,10 @@ provision:
       systemctl enable prometheus alertmanager
       systemctl start prometheus alertmanager
       
-      echo "Monitoring stack provisioned"
+      # Fill disk to trigger alerts (leave ~15% free to trigger < 20% condition)
+      dd if=/dev/zero of=/var/fillfile bs=1M count=15000 2>/dev/null || true
+      
+      echo "Monitoring stack provisioned - disk filled to trigger alert storm"
 
 portForwards:
   - guestPort: 9090

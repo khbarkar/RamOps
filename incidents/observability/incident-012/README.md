@@ -8,21 +8,9 @@
 
 It's 3am and your phone won't stop buzzing. Dozens of alerts are firing: "Database connection failed", "API latency high", "Cache miss rate elevated", "Queue backlog growing", "Error rate spiking". The on-call engineer (you) needs to figure out what's actually wrong and stop the alert storm.
 
-The problem: one root cause (disk full on the database server) is triggering cascading failures across the entire stack, creating an overwhelming number of alerts that obscure the real issue.
-
 ## Prerequisites
 
-- [Vagrant](https://www.vagrantup.com/downloads) >= 2.0
-- **Apple Silicon (ARM) Macs - Choose ONE:**
-  - **QEMU (FREE, recommended):**
-    ```bash
-    brew install qemu
-    vagrant plugin install vagrant-qemu
-    ```
-  - **VMware Fusion** (free for personal use)
-  - **Parallels Desktop** (14-day trial)
-- **Intel Macs / Linux / Windows:**
-  - [VirtualBox](https://www.virtualbox.org/) >= 6.0
+- [Lima](https://lima-vm.io/) for VM management
 - 4GB+ RAM free
 
 ## What You'll Learn
@@ -47,21 +35,26 @@ This creates a VM with:
 
 ## The Exercise
 
-1. Access Alertmanager at http://localhost:9093
-2. Observe the alert storm (20+ alerts firing)
-3. Identify which alerts are symptoms vs root cause
-4. SSH into the VM: `vagrant ssh`
-5. Investigate and find the actual root cause
-6. Fix the root issue
+1. Access Prometheus at http://localhost:9090
+2. Access Alertmanager at http://localhost:9093
+3. Observe the alert storm (multiple alerts firing)
+4. Identify which alerts are symptoms vs root cause
+5. SSH into the VM to investigate: `limactl shell lima-alertmanager`
+6. Find and fix the actual root cause
 7. Configure alert grouping/silencing for better incident response
 8. Run `./verify.sh` to confirm proper alert design
 
 ## Your Task
 
-1. **Triage**: Determine which alert represents the root cause
-2. **Fix**: Resolve the underlying issue
-3. **Improve**: Configure Alertmanager to group related alerts
-4. **Design**: Implement alert hierarchy to prevent future storms
+1. Open Prometheus at http://localhost:9090/alerts to see firing alerts
+2. Open Alertmanager at http://localhost:9093 to see alert notifications
+3. Observe the alert storm (multiple alerts firing simultaneously)
+4. Identify which alerts are symptoms vs root cause
+5. SSH into the VM: `limactl shell lima-alertmanager`
+6. Investigate and find the actual root cause
+7. Fix the underlying issue
+8. Configure Alertmanager to group related alerts
+9. Implement alert hierarchy to prevent future storms
 
 ## Hints
 
