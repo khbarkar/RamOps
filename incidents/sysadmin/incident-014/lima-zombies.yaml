@@ -1,0 +1,116 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 2
+memory: "2GiB"
+disk: "10GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      hostnamectl set-hostname zombies
+      apt-get update
+      apt-get install -y python3 strace gcc
+      
+      mkdir -p /opt/buggy-apps
+      
+      cat > /opt/buggy-apps/worker_manager.py << 'EOF'
+      import os
+      import time
+      import sys
+      
+      def spawn_worker():
+          pid = os.fork()
+          if pid == 0:
+              time.sleep(2)
+              sys.exit(0)
+          return pid
+      
+      print("Worker manager starting - spawning workers without reaping...")
+      workers = []
+      for i in range(100):
+          pid = spawn_worker()
+          workers.append(pid)
+          time.sleep(0.1)
+      
+      print(f"Spawned {len(workers)} workers. Parent sleeping forever...")
+      while True:
+          time.sleep(60)
+      EOF
+      
+      cat > /opt/buggy-apps/bash_backgrounder.sh << 'EOF'
+      #!/bin/bash
+      echo "Bash script spawning background jobs without wait..."
+      for i in {1..50}; do
+        (sleep 3; exit 0) &
+      done
+      echo "Spawned 50 background jobs. Sleeping forever..."
+      sleep infinity
+      EOF
+      chmod +x /opt/buggy-apps/bash_backgrounder.sh
+      
+      cat > /opt/buggy-apps/broken_daemon.c << 'EOF'
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <unistd.h>
+      #include <sys/types.h>
+      
+      int main() {
+          printf("Broken daemon spawning children...\n");
+          for (int i = 0; i < 50; i++) {
+              pid_t pid = fork();
+              if (pid == 0) {
+                  sleep(2);
+                  exit(0);
+              }
+              usleep(100000);
+          }
+          printf("Spawned 50 children. Parent sleeping forever...\n");
+          while(1) sleep(60);
+          return 0;
+      }
+      EOF
+      
+      gcc -o /opt/buggy-apps/broken_daemon /opt/buggy-apps/broken_daemon.c
+      
+      cat > /opt/buggy-apps/signal_ignorer.py << 'EOF'
+      import os
+      import signal
+      import time
+      
+      signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+      
+      print("Signal ignorer starting (SIGCHLD ignored - should auto-reap)...")
+      for i in range(30):
+          pid = os.fork()
+          if pid == 0:
+              time.sleep(1)
+              os._exit(0)
+          time.sleep(0.1)
+      
+      print("Spawned 30 children with SIGCHLD ignored.")
+      while True:
+          time.sleep(60)
+      EOF
+      
+      printf '%s\n' '[Unit]' 'Description=Buggy Worker Manager' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/usr/bin/python3 /opt/buggy-apps/worker_manager.py' 'Restart=no' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/worker-manager.service
+      
+      printf '%s\n' '[Unit]' 'Description=Bash Backgrounder' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/opt/buggy-apps/bash_backgrounder.sh' 'Restart=no' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/bash-backgrounder.service
+      
+      printf '%s\n' '[Unit]' 'Description=Broken Daemon' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/opt/buggy-apps/broken_daemon' 'Restart=no' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/broken-daemon.service
+      
+      systemctl daemon-reload
+      systemctl enable worker-manager.service bash-backgrounder.service broken-daemon.service
+      systemctl start worker-manager.service
+      sleep 15
+      systemctl start bash-backgrounder.service
+      sleep 10
+      systemctl start broken-daemon.service
+      sleep 10
+      
+      echo "Zombie apocalypse initiated"
+
+portForwards: []
