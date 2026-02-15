@@ -7,167 +7,302 @@ VERSION="1.0.0"
 REPO_URL="https://github.com/khbarkar/openRam"
 INSTALL_DIR="$HOME/.ramops"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
+# Colors - Orange on Black theme
+ORANGE='\033[38;5;208m'
+DARK_ORANGE='\033[38;5;166m'
+LIGHT_ORANGE='\033[38;5;214m'
+BLACK='\033[0;30m'
+GRAY='\033[38;5;240m'
 WHITE='\033[1;37m'
-GRAY='\033[0;90m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 BOLD='\033[1m'
+DIM='\033[2m'
 
 # Logo
 show_logo() {
   clear
-  echo -e "${RED}"
+  echo -e "${ORANGE}"
   cat << 'EOF'
-    ____                   ____            
-   / __ \____ _____ ___   / __ \____  _____
-  / /_/ / __ `/ __ `__ \ / / / / __ \/ ___/
- / _, _/ /_/ / / / / / // /_/ / /_/ (__  ) 
-/_/ |_|\__,_/_/ /_/ /_/ \____/ .___/____/  
-                            /_/            
+
+
+ ██████╗ ██████╗ ███████╗███╗   ██╗██████╗  █████╗ ███╗   ███╗
+██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔══██╗████╗ ████║
+██║   ██║██████╔╝█████╗  ██╔██╗ ██║██████╔╝███████║██╔████╔██║
+██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══██╗██╔══██║██║╚██╔╝██║
+╚██████╔╝██║     ███████╗██║ ╚████║██║  ██║██║  ██║██║ ╚═╝ ██║
+ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+
 EOF
   echo -e "${NC}"
   echo -e "${GRAY}Incident Training for Kubernetes & Cloud Infrastructure${NC}"
-  echo -e "${GRAY}Version $VERSION${NC}"
   echo ""
 }
 
 # Check dependencies
 check_deps() {
-  local missing=()
-  
   if ! command -v git &> /dev/null; then
-    missing+=("git")
-  fi
-  
-  if ! command -v limactl &> /dev/null && ! command -v vagrant &> /dev/null; then
-    missing+=("lima or vagrant")
-  fi
-  
-  if [ ${#missing[@]} -gt 0 ]; then
-    echo -e "${RED}Missing dependencies: ${missing[*]}${NC}"
+    clear
+    echo -e "${ORANGE}Git is required but not installed.${NC}"
     echo ""
     echo "Install with:"
-    echo "  brew install ${missing[*]}"
+    echo "  brew install git"
     exit 1
+  fi
+  
+  # Check for VM tools
+  local has_vm_tool=false
+  if command -v limactl &> /dev/null || command -v vagrant &> /dev/null || command -v kind &> /dev/null; then
+    has_vm_tool=true
+  fi
+  
+  if [ "$has_vm_tool" = false ]; then
+    clear
+    show_logo
+    echo -e "${ORANGE}No VM tool detected.${NC}"
+    echo ""
+    echo "Lima is recommended for running multi-VM scenarios."
+    echo ""
+    echo -e "${GRAY}Would you like to install Lima? (y/n)${NC}"
+    read -rsn1 choice
+    
+    case $choice in
+      'y'|'Y')
+        echo ""
+        echo -e "${ORANGE}Installing Lima...${NC}"
+        if command -v brew &> /dev/null; then
+          brew install lima
+          echo ""
+          echo -e "${ORANGE}Lima installed! Restarting...${NC}"
+          sleep 2
+          exec "$0"
+        else
+          echo ""
+          echo -e "${ORANGE}Homebrew not found. Install Lima manually:${NC}"
+          echo "  brew install lima"
+          exit 1
+        fi
+        ;;
+      *)
+        clear
+        echo -e "${ORANGE}You can install Lima later with:${NC}"
+        echo "  brew install lima"
+        echo ""
+        echo "Or install Vagrant for VM scenarios:"
+        echo "  brew install vagrant"
+        echo ""
+        echo "Kind is also supported for Kubernetes scenarios:"
+        echo "  brew install kind"
+        exit 0
+        ;;
+    esac
   fi
 }
 
 # Clone or update repo
 setup_repo() {
   if [ ! -d "$INSTALL_DIR" ]; then
-    echo -e "${CYAN}Cloning Ram Ops repository...${NC}"
+    echo -e "${GRAY}Cloning Ram Ops repository...${NC}"
     git clone "$REPO_URL" "$INSTALL_DIR" --quiet
   else
-    echo -e "${CYAN}Updating Ram Ops repository...${NC}"
     cd "$INSTALL_DIR"
-    git pull --quiet
+    git pull --quiet 2>/dev/null || true
   fi
 }
 
-# List incidents
-list_incidents() {
-  local incidents=(
-    "kubernetes/incident-001:Production pod crash-looping:Beginner:kind"
-    "kubernetes/incident-002:Node goes NotReady:Beginner:kind"
-    "kubernetes/incident-003:DNS outage:Intermediate:kind"
-    "kubernetes/incident-004:Storage volume full:Beginner-Intermediate:kind"
-    "kubernetes/incident-008:HTTPS certificate errors:Intermediate:kind"
-    "kubernetes/incident-009:Memory leak in production:Intermediate:kind"
-    "kubernetes/incident-010:Exposed database credentials:Beginner-Intermediate:kind"
-    "kafka/incident-005:Kafka disk-bound brokers:Intermediate:lima"
-    "kafka/incident-006:Kafka network-bound brokers:Intermediate-Advanced:lima"
-    "deployment/incident-007:Hard link deployment trap:Intermediate-Advanced:lima"
-    "terraform/incident-011:Infrastructure drift detection:Intermediate:lima"
-    "observability/incident-012:Alert storm from single root cause:Intermediate-Advanced:lima"
-  )
-  
-  echo "${incidents[@]}"
+# Get all incidents with full info
+get_all_incidents() {
+  echo "001:kubernetes:Production pod crash-looping:Beginner"
+  echo "002:kubernetes:Node goes NotReady:Beginner"
+  echo "003:kubernetes:DNS outage:Intermediate"
+  echo "004:kubernetes:Storage volume full:Beginner-Intermediate"
+  echo "005:kafka:Disk-bound:Intermediate"
+  echo "006:kafka:Network-bound:Intermediate-Advanced"
+  echo "007:deployment:Hard link deployment trap:Intermediate-Advanced"
+  echo "008:kubernetes:HTTPS certificate errors:Intermediate"
+  echo "009:kubernetes:Memory leak:Intermediate"
+  echo "010:kubernetes:Exposed credentials:Beginner-Intermediate"
+  echo "011:terraform:Infrastructure drift:Intermediate"
+  echo "012:observability:Alert storm:Intermediate-Advanced"
 }
 
-# Draw menu
-draw_menu() {
+# Get incidents by difficulty
+get_incidents_by_difficulty() {
+  local difficulty=$1
+  get_all_incidents | while IFS=':' read -r num tech title diff; do
+    if [[ "$diff" == *"$difficulty"* ]]; then
+      echo "$num:$tech:$title:$diff"
+    fi
+  done
+}
+
+# Get incidents by technology
+get_incidents_by_technology() {
+  local tech=$1
+  get_all_incidents | while IFS=':' read -r num technology title diff; do
+    if [[ "$technology" == "$tech" ]]; then
+      echo "$num:$technology:$title:$diff"
+    fi
+  done
+}
+
+# Main menu - Browse by
+draw_browse_menu() {
   local selected=$1
-  local incidents=($(list_incidents))
   
   show_logo
   
-  echo -e "${WHITE}${BOLD}SELECT AN INCIDENT${NC}"
+  echo -e "${ORANGE}${BOLD}BROWSE BY${NC}"
   echo ""
   
-  for i in "${!incidents[@]}"; do
-    IFS=':' read -r path title difficulty vm_type <<< "${incidents[$i]}"
-    local num=$((i + 1))
-    
+  local options=("Difficulty" "Category")
+  
+  for i in "${!options[@]}"; do
     if [ $i -eq $selected ]; then
-      echo -e "${GREEN}▶ ${BOLD}$num. $title${NC} ${GRAY}[$difficulty]${NC}"
+      echo -e "  ${ORANGE}▶ ${BOLD}${options[$i]}${NC}"
     else
-      echo -e "  ${GRAY}$num.${NC} $title ${GRAY}[$difficulty]${NC}"
+      echo -e "  ${GRAY}${options[$i]}${NC}"
     fi
   done
   
   echo ""
-  echo -e "${GRAY}────────────────────────────────────────────────────────${NC}"
-  echo -e "${CYAN}↑/↓${NC} Navigate  ${CYAN}Enter${NC} Select  ${CYAN}q${NC} Quit"
+  echo -e "${DIM}─────────────────────────────────────────${NC}"
+  echo -e "${GRAY}↑/↓${NC} Navigate  ${GRAY}Enter${NC} Select  ${GRAY}q${NC} Quit"
 }
 
-# Draw action menu
-draw_action_menu() {
+# Difficulty selection menu
+draw_difficulty_menu() {
   local selected=$1
-  local incident_path=$2
-  local incident_title=$3
   
   show_logo
   
-  echo -e "${WHITE}${BOLD}$incident_title${NC}"
-  echo -e "${GRAY}$incident_path${NC}"
+  echo -e "${ORANGE}${BOLD}SELECT DIFFICULTY${NC}"
   echo ""
   
-  local actions=("Setup" "Verify" "Teardown" "View README" "Back")
+  local difficulties=("Beginner" "Intermediate" "Advanced")
+  
+  for i in "${!difficulties[@]}"; do
+    if [ $i -eq $selected ]; then
+      echo -e "  ${ORANGE}▶ ${BOLD}${difficulties[$i]}${NC}"
+    else
+      echo -e "  ${GRAY}${difficulties[$i]}${NC}"
+    fi
+  done
+  
+  echo ""
+  echo -e "${DIM}─────────────────────────────────────────${NC}"
+  echo -e "${GRAY}↑/↓${NC} Navigate  ${GRAY}Enter${NC} Select  ${GRAY}b${NC} Back  ${GRAY}q${NC} Quit"
+}
+
+# Technology selection menu
+draw_technology_menu() {
+  local selected=$1
+  
+  show_logo
+  
+  echo -e "${ORANGE}${BOLD}SELECT CATEGORY${NC}"
+  echo ""
+  
+  local technologies=("Kubernetes" "Kafka" "Deployment" "Terraform" "Observability" "SRE")
+  
+  for i in "${!technologies[@]}"; do
+    if [ $i -eq $selected ]; then
+      echo -e "  ${ORANGE}▶ ${BOLD}${technologies[$i]}${NC}"
+    else
+      echo -e "  ${GRAY}${technologies[$i]}${NC}"
+    fi
+  done
+  
+  echo ""
+  echo -e "${DIM}─────────────────────────────────────────${NC}"
+  echo -e "${GRAY}↑/↓${NC} Navigate  ${GRAY}Enter${NC} Select  ${GRAY}b${NC} Back  ${GRAY}q${NC} Quit"
+}
+
+# Incident list menu
+draw_incident_menu() {
+  local selected=$1
+  shift
+  local incidents=("$@")
+  
+  show_logo
+  
+  echo -e "${ORANGE}${BOLD}SELECT INCIDENT${NC}"
+  echo ""
+  
+  for i in "${!incidents[@]}"; do
+    IFS=':' read -r num tech title difficulty <<< "${incidents[$i]}"
+    local tech_display=$(echo $tech | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+    
+    if [ $i -eq $selected ]; then
+      echo -e "  ${ORANGE}▶ ${BOLD}$num - $tech_display - $title - $difficulty${NC}"
+    else
+      echo -e "  ${GRAY}$num - $tech_display - $title - $difficulty${NC}"
+    fi
+    [ $i -lt $((${#incidents[@]} - 1)) ] && echo ""
+  done
+  
+  echo ""
+  echo -e "${DIM}─────────────────────────────────────────${NC}"
+  echo -e "${GRAY}↑/↓${NC} Navigate  ${GRAY}Enter${NC} Select  ${GRAY}b${NC} Back  ${GRAY}q${NC} Quit"
+}
+
+# Action menu
+draw_action_menu() {
+  local selected=$1
+  local incident_num=$2
+  local incident_title=$3
+  local category=$4
+  
+  show_logo
+  
+  echo -e "${ORANGE}${BOLD}Incident $incident_num${NC}"
+  echo -e "${WHITE}$incident_title${NC}"
+  echo ""
+  
+  local actions=("Setup" "Verify" "Teardown" "View README")
   
   for i in "${!actions[@]}"; do
     if [ $i -eq $selected ]; then
-      echo -e "${GREEN}▶ ${BOLD}${actions[$i]}${NC}"
+      echo -e "  ${ORANGE}▶ ${BOLD}${actions[$i]}${NC}"
     else
       echo -e "  ${GRAY}${actions[$i]}${NC}"
     fi
   done
   
   echo ""
-  echo -e "${GRAY}────────────────────────────────────────────────────────${NC}"
-  echo -e "${CYAN}↑/↓${NC} Navigate  ${CYAN}Enter${NC} Select  ${CYAN}q${NC} Back"
+  echo -e "${DIM}─────────────────────────────────────────${NC}"
+  echo -e "${GRAY}↑/↓${NC} Navigate  ${GRAY}Enter${NC} Select  ${GRAY}b${NC} Back  ${GRAY}q${NC} Quit"
 }
 
 # Run action
 run_action() {
   local action=$1
-  local incident_path=$2
-  local vm_type=$3
+  local category=$2
+  local incident_num=$3
   
+  local incident_path="$category/incident-$incident_num"
   cd "$INSTALL_DIR/incidents/$incident_path"
   
+  clear
   case $action in
     0) # Setup
-      if [ "$vm_type" = "lima" ] && [ -f "setup-lima.sh" ]; then
+      if [ -f "setup-lima.sh" ]; then
         ./setup-lima.sh
       else
         ./setup.sh
       fi
       ;;
     1) # Verify
-      if [ "$vm_type" = "lima" ] && [ -f "verify-lima.sh" ]; then
+      if [ -f "verify-lima.sh" ]; then
         ./verify-lima.sh
-      else
+      elif [ -f "verify.sh" ]; then
         ./verify.sh
+      else
+        echo -e "${GRAY}No verify script available${NC}"
       fi
       ;;
     2) # Teardown
-      if [ "$vm_type" = "lima" ] && [ -f "teardown-lima.sh" ]; then
+      if [ -f "teardown-lima.sh" ]; then
         ./teardown-lima.sh
       else
         ./teardown.sh
@@ -185,46 +320,160 @@ run_action() {
   esac
   
   echo ""
-  echo -e "${CYAN}Press any key to continue...${NC}"
+  echo -e "${GRAY}Press any key to continue...${NC}"
   read -n 1 -s
 }
 
 # Action menu loop
 action_menu() {
-  local incident_path=$1
-  local incident_title=$2
-  local vm_type=$3
+  local category=$1
+  local incident_num=$2
+  local incident_title=$3
   local selected=0
-  local max_items=4
+  local max_items=3
   
   while true; do
-    draw_action_menu $selected "$incident_path" "$incident_title"
+    draw_action_menu $selected "$incident_num" "$incident_title" "$category"
     
     read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
     case $key in
-      $'\x1b')
-        read -rsn2 -t 0.1 key
-        case $key in
-          '[A') # Up
-            ((selected--))
-            [ $selected -lt 0 ] && selected=$max_items
-            ;;
-          '[B') # Down
-            ((selected++))
-            [ $selected -gt $max_items ] && selected=0
-            ;;
-        esac
-        ;;
-      '') # Enter
-        if [ $selected -eq 4 ]; then
-          return
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '') run_action $selected "$category" "$incident_num" ;;
+      'b'|'B') return ;;
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
+    esac
+  done
+}
+
+# Browse menu loop
+browse_menu() {
+  local selected=0
+  local max_items=1
+  
+  while true; do
+    draw_browse_menu $selected
+    
+    read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
+    case $key in
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '')
+        if [ $selected -eq 0 ]; then
+          difficulty_menu
+        else
+          technology_menu
         fi
-        clear
-        run_action $selected "$incident_path" "$vm_type"
         ;;
-      'q'|'Q')
-        return
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
+    esac
+  done
+}
+
+# Difficulty menu loop
+difficulty_menu() {
+  local selected=0
+  local difficulties=("Beginner" "Intermediate" "Advanced")
+  local max_items=$((${#difficulties[@]} - 1))
+  
+  while true; do
+    draw_difficulty_menu $selected
+    
+    read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
+    case $key in
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '')
+        local incidents=($(get_incidents_by_difficulty "${difficulties[$selected]}"))
+        if [ ${#incidents[@]} -gt 0 ]; then
+          incident_menu "${incidents[@]}"
+        fi
         ;;
+      'b'|'B') return ;;
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
+    esac
+  done
+}
+
+# Technology menu loop
+technology_menu() {
+  local selected=0
+  local technologies=("kubernetes" "kafka" "deployment" "terraform" "observability" "sre")
+  local max_items=$((${#technologies[@]} - 1))
+  
+  while true; do
+    draw_technology_menu $selected
+    
+    read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
+    case $key in
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '')
+        local incidents=($(get_incidents_by_technology "${technologies[$selected]}"))
+        if [ ${#incidents[@]} -gt 0 ]; then
+          incident_menu "${incidents[@]}"
+        fi
+        ;;
+      'b'|'B') return ;;
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
+    esac
+  done
+}
+
+# Incident menu loop
+incident_menu() {
+  local incidents=("$@")
+  local selected=0
+  local max_items=$((${#incidents[@]} - 1))
+  
+  while true; do
+    draw_incident_menu $selected "${incidents[@]}"
+    
+    read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
+    case $key in
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '')
+        IFS=':' read -r num tech title difficulty <<< "${incidents[$selected]}"
+        action_menu "$tech" "$num" "$title"
+        ;;
+      'b'|'B') return ;;
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
     esac
   done
 }
@@ -232,36 +481,25 @@ action_menu() {
 # Main menu loop
 main_menu() {
   local selected=0
-  local incidents=($(list_incidents))
-  local max_items=$((${#incidents[@]} - 1))
+  local categories=($(get_categories))
+  local max_items=$((${#categories[@]} - 1))
   
   while true; do
-    draw_menu $selected
+    draw_main_menu $selected
     
     read -rsn1 key
+    if [[ $key == $'\x1b' ]]; then
+      read -rsn1 key
+      if [[ $key == '[' ]]; then
+        read -rsn1 key
+      fi
+    fi
+    
     case $key in
-      $'\x1b')
-        read -rsn2 -t 0.1 key
-        case $key in
-          '[A') # Up
-            ((selected--))
-            [ $selected -lt 0 ] && selected=$max_items
-            ;;
-          '[B') # Down
-            ((selected++))
-            [ $selected -gt $max_items ] && selected=0
-            ;;
-        esac
-        ;;
-      '') # Enter
-        IFS=':' read -r path title difficulty vm_type <<< "${incidents[$selected]}"
-        action_menu "$path" "$title" "$vm_type"
-        ;;
-      'q'|'Q')
-        clear
-        echo -e "${GREEN}Thanks for using Ram Ops!${NC}"
-        exit 0
-        ;;
+      'A'|'k') ((selected--)); [ $selected -lt 0 ] && selected=$max_items ;;
+      'B'|'j') ((selected++)); [ $selected -gt $max_items ] && selected=0 ;;
+      '') incident_menu "${categories[$selected]}" ;;
+      'q'|'Q') clear; echo -e "${ORANGE}Thanks for using Ram Ops!${NC}"; exit 0 ;;
     esac
   done
 }
@@ -270,7 +508,7 @@ main_menu() {
 main() {
   check_deps
   setup_repo
-  main_menu
+  browse_menu
 }
 
 main

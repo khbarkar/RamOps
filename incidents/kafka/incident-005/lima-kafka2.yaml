@@ -15,7 +15,6 @@ provision:
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      
       hostnamectl set-hostname kafka2
       apt-get update
       apt-get install -y openjdk-17-jre-headless wget
@@ -29,43 +28,18 @@ provision:
       rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
       
       useradd -r -s /bin/false kafka || true
-      mkdir -p /var/lib/kafka/data
+      mkdir -p /var/lib/kafka/data /etc/systemd/system/kafka.service.d
       chown -R kafka:kafka /var/lib/kafka
       chown -R kafka:kafka /opt/kafka*
       
-      cat > /opt/kafka/config/server.properties <<'EOF'
-broker.id=2
-listeners=PLAINTEXT://0.0.0.0:9092
-advertised.listeners=PLAINTEXT://192.168.5.12:9092
-log.dirs=/var/lib/kafka/data
-num.partitions=8
-log.retention.hours=1
-zookeeper.connect=192.168.5.20:2181
-EOF
+      printf '%s\n' 'broker.id=2' 'listeners=PLAINTEXT://0.0.0.0:9092' 'advertised.listeners=PLAINTEXT://192.168.5.12:9092' 'log.dirs=/var/lib/kafka/data' 'num.partitions=8' 'log.retention.hours=1' 'zookeeper.connect=192.168.5.20:2181' > /opt/kafka/config/server.properties
       
-      cat > /etc/systemd/system/kafka.service <<'EOF'
-[Unit]
-Description=Apache Kafka
-After=network.target
-
-[Service]
-Type=simple
-User=kafka
-ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      printf '%s\n' '[Unit]' 'Description=Apache Kafka' 'After=network.target' '' '[Service]' 'Type=simple' 'User=kafka' 'ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties' 'Restart=on-failure' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/kafka.service
       
-      cat > /etc/systemd/system/kafka.service.d/io-limit.conf <<'EOF'
-[Service]
-IOWriteBandwidthMax=/var/lib/kafka 10M
-EOF
+      printf '%s\n' '[Service]' 'IOWriteBandwidthMax=/var/lib/kafka 10M' > /etc/systemd/system/kafka.service.d/io-limit.conf
       
       systemctl daemon-reload
       systemctl enable kafka
-      
       echo "Kafka broker 2 provisioned"
 
 portForwards:

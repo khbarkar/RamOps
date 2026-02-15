@@ -10,17 +10,19 @@ disk: "20GiB"
 networks:
   - lima: shared
 
+mounts:
+  - location: "~"
+    writable: false
+
 provision:
   - mode: system
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      
       hostnamectl set-hostname monitoring
       apt-get update
       apt-get install -y wget openjdk-17-jre-headless
       
-      # Install Zookeeper
       KAFKA_VERSION="3.6.0"
       SCALA_VERSION="2.13"
       cd /opt
@@ -28,34 +30,16 @@ provision:
       tar xzf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
       ln -s kafka_${SCALA_VERSION}-${KAFKA_VERSION} kafka
       rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-      
       mkdir -p /var/lib/zookeeper
       
-      cat > /opt/kafka/config/zookeeper.properties <<'EOF'
-dataDir=/var/lib/zookeeper
-clientPort=2181
-maxClientCnxns=0
-EOF
+      printf '%s\n' 'dataDir=/var/lib/zookeeper' 'clientPort=2181' 'maxClientCnxns=0' > /opt/kafka/config/zookeeper.properties
       
-      cat > /etc/systemd/system/zookeeper.service <<'EOF'
-[Unit]
-Description=Apache Zookeeper
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/opt/kafka/bin/zookeeper-server-start.sh /opt/kafka/config/zookeeper.properties
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      printf '%s\n' '[Unit]' 'Description=Apache Zookeeper' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/opt/kafka/bin/zookeeper-server-start.sh /opt/kafka/config/zookeeper.properties' 'Restart=on-failure' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/zookeeper.service
       
       systemctl daemon-reload
       systemctl enable zookeeper
       systemctl start zookeeper
       
-      # Install Prometheus
       PROM_VERSION="2.48.0"
       wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-arm64.tar.gz
       tar xzf prometheus-${PROM_VERSION}.linux-arm64.tar.gz
@@ -64,35 +48,14 @@ EOF
       mkdir -p /etc/prometheus /var/lib/prometheus
       rm -rf prometheus-${PROM_VERSION}.linux-arm64*
       
-      cat > /etc/prometheus/prometheus.yml <<'EOF'
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-  - job_name: 'kafka'
-    static_configs:
-      - targets: ['192.168.5.11:9092', '192.168.5.12:9092', '192.168.5.13:9092']
-EOF
+      printf '%s\n' 'global:' '  scrape_interval: 15s' '' 'scrape_configs:' "  - job_name: 'kafka'" '    static_configs:' "      - targets: ['192.168.5.11:9092', '192.168.5.12:9092', '192.168.5.13:9092']" > /etc/prometheus/prometheus.yml
       
-      cat > /etc/systemd/system/prometheus.service <<'EOF'
-[Unit]
-Description=Prometheus
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+      printf '%s\n' '[Unit]' 'Description=Prometheus' 'After=network.target' '' '[Service]' 'Type=simple' 'ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus' 'Restart=always' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/prometheus.service
       
       systemctl daemon-reload
       systemctl enable prometheus
       systemctl start prometheus
       
-      # Install Grafana
       wget -q -O /usr/share/keyrings/grafana.gpg https://apt.grafana.com/gpg.key
       echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
       apt-get update
