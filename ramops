@@ -504,13 +504,37 @@ run_action() {
       echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
       echo ""
       
-      # Extract Hints section from README
-      sed -n '/## Hints/,/## \(Root Cause\|Cleanup\)/p' README.md | \
-      sed '$ d' | \
-      sed 's/^## Hints$//' | \
-      sed 's/^$//' | \
-      fold -s -w 65 | \
-      sed 's/^/  /'
+      # Extract all hints into an array
+      mapfile -t hints < <(sed -n '/## Hints/,/## \(Root Cause\|Cleanup\)/p' README.md | \
+        grep -E '^Hint [0-9]+:' | \
+        sed 's/^Hint [0-9]*: //')
+      
+      if [ ${#hints[@]} -eq 0 ]; then
+        echo -e "  ${GRAY}No hints available for this incident.${NC}"
+      else
+        local hint_index=0
+        while [ $hint_index -lt ${#hints[@]} ]; do
+          clear
+          echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+          echo -e "${ORANGE}  Hint $((hint_index + 1)) of ${#hints[@]}${NC}"
+          echo -e "${ORANGE}═══════════════════════════════════════════════════════════════════${NC}"
+          echo ""
+          echo "${hints[$hint_index]}" | fold -s -w 65 | sed 's/^/  /'
+          echo ""
+          echo ""
+          if [ $hint_index -lt $((${#hints[@]} - 1)) ]; then
+            echo -e "${GRAY}Press 'n' for next hint, 'b' to go back, or any other key to exit...${NC}"
+          else
+            echo -e "${GRAY}Press any key to continue...${NC}"
+          fi
+          read -n 1 -s key
+          case $key in
+            'n'|'N') ((hint_index++)) ;;
+            'b'|'B') break ;;
+            *) break ;;
+          esac
+        done
+      fi
       
       ;;
   esac
