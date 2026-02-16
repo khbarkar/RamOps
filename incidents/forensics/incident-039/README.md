@@ -50,7 +50,7 @@ Hint 3: List all processes directly from /proc: `ls -la /proc/[0-9]* | head -20`
 
 Hint 4: Use alternative process listing tools that are harder to compromise: `pstree -p`, `systemctl status`, or read /proc directly: `for pid in /proc/[0-9]*; do echo "$pid: $(cat $pid/cmdline 2>/dev/null)"; done | grep -v "^/proc.*:$"`.
 
-Hint 5: Check cgroup CPU usage: `cat /sys/fs/cgroup/cpu/cpu.stat` or `systemd-cgtop`. This shows actual CPU consumption that can't be hidden.
+Hint 5: Check cgroup CPU usage: `cat /sys/fs/cgroup/cpu.stat` (cgroup v2) or `systemd-cgtop`. This shows actual CPU consumption that can't be hidden by LD_PRELOAD tricks.
 
 Hint 6: Look for suspicious network connections: `sudo ss -antp` or `sudo lsof -i -P -n`. Cryptominers typically connect to mining pools on ports like 3333, 4444, 8080, or 14444.
 

