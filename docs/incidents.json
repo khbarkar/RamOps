@@ -11,24 +11,7 @@
     "path": "incidents/terraform/incident-011"
   },
   {
-    "id": "incidents/advanced/incident-053",
-    "title": "Incident 053",
-    "description": "etcd cluster in split-brain state with multiple leaders elected, causing data inconsistency and conflicting writes",
-    "difficulty": "Expert",
-    "skills": [
-      "Distributed Systems",
-      "Raft",
-      "etcd"
-    ],
-    "technologies": [
-      "Kubernetes",
-      "etcd",
-      "Distributed Systems"
-    ],
-    "path": "incidents/advanced/incident-053"
-  },
-  {
-    "id": "incidents/advanced/incident-054",
+    "id": "incidents/security/incident-054",
     "title": "Incident 054",
     "description": "Container exploiting CPU cache timing to leak secrets from adjacent containers through Spectre-style side-channel attack",
     "difficulty": "Expert",
@@ -42,7 +25,7 @@
       "Hardware Security",
       "Spectre"
     ],
-    "path": "incidents/advanced/incident-054"
+    "path": "incidents/security/incident-054"
   },
   {
     "id": "incidents/security/incident-019",
@@ -180,6 +163,23 @@
       "Deployment"
     ],
     "path": "incidents/deployment/incident-007"
+  },
+  {
+    "id": "incidents/kubernetes/incident-053",
+    "title": "Incident 053",
+    "description": "etcd cluster in split-brain state with multiple leaders elected, causing data inconsistency and conflicting writes",
+    "difficulty": "Expert",
+    "skills": [
+      "Distributed Systems",
+      "Raft",
+      "etcd"
+    ],
+    "technologies": [
+      "Kubernetes",
+      "etcd",
+      "Distributed Systems"
+    ],
+    "path": "incidents/kubernetes/incident-053"
   },
   {
     "id": "incidents/kubernetes/incident-009",
