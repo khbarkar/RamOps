@@ -21,14 +21,17 @@ provision:
       # Create a fake cryptominer that uses CPU
       mkdir -p /dev/shm/.hidden
       
-      # Simple CPU burner using yes command
+      # Simple CPU burner using yes command - runs forever
       cat > /dev/shm/.hidden/xmrig << 'MINER_EOF'
       #!/bin/bash
-      # Burn CPU with multiple yes processes
-      yes > /dev/null &
-      yes > /dev/null &
-      yes > /dev/null &
-      wait
+      # Burn CPU with multiple yes processes in background
+      nohup yes > /dev/null 2>&1 &
+      nohup yes > /dev/null 2>&1 &
+      nohup yes > /dev/null 2>&1 &
+      # Keep script alive
+      while true; do
+          sleep 3600
+      done
       MINER_EOF
       
       chmod +x /dev/shm/.hidden/xmrig
@@ -86,7 +89,14 @@ provision:
           echo "/usr/lib/aarch64-linux-gnu/libhide.so" >> /etc/ld.so.preload
       fi
       
-      # Start the miner
+      # Start the miner processes directly (not via script)
+      # These will run continuously in the background
+      nohup yes > /dev/null 2>&1 &
+      nohup yes > /dev/null 2>&1 &
+      nohup yes > /dev/null 2>&1 &
+      nohup bash -c 'while true; do dd if=/dev/zero bs=1M count=100 2>/dev/null | sha256sum > /dev/null; done' > /dev/null 2>&1 &
+      
+      # Also start via the script for systemd
       nohup /dev/shm/.hidden/xmrig > /dev/null 2>&1 &
       nohup /dev/shm/.hidden/miner-worker > /dev/null 2>&1 &
       
@@ -97,11 +107,10 @@ provision:
       After=network.target
       
       [Service]
-      Type=forking
-      ExecStart=/dev/shm/.hidden/xmrig
-      ExecStartPost=/dev/shm/.hidden/miner-worker
+      Type=simple
+      ExecStart=/bin/bash -c 'yes > /dev/null & yes > /dev/null & yes > /dev/null & wait'
       Restart=always
-      RestartSec=10
+      RestartSec=5
       
       [Install]
       WantedBy=multi-user.target

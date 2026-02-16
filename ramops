@@ -526,7 +526,7 @@ action_menu() {
   local incident_num=$2
   local incident_title=$3
   local selected=0
-  local max_items=3
+  local max_items=4  # 0-4 = 5 items (Setup, Verify, Teardown, Instructions, Hints)
   
   while true; do
     draw_action_menu $selected "$incident_num" "$incident_title" "$category"
