@@ -2,5 +2,6 @@
 set -euo pipefail
 
 echo "Destroying VM..."
-vagrant destroy -f
+limactl stop lima-alertmanager 2>/dev/null || true
+limactl delete -f lima-alertmanager 2>/dev/null || true
 echo "Done."

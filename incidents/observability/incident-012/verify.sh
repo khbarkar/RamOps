@@ -5,18 +5,18 @@ echo "=== RamOps: Verifying alert storm resolution ==="
 echo ""
 
 # Check if disk space has been freed
-DISK_USAGE=$(vagrant ssh -c 'df -h /var/lib/postgresql/data | tail -1 | awk "{print \$5}"' | tr -d '%')
+DISK_USAGE=$(limactl shell lima-alertmanager df -h / 2>/dev/null | tail -1 | awk '{print $5}' | tr -d '%')
 
-echo "Database disk usage: ${DISK_USAGE}%"
+echo "Disk usage: ${DISK_USAGE}%"
 
-if [ "$DISK_USAGE" -gt 90 ]; then
+if [ "$DISK_USAGE" -gt 80 ]; then
   echo ""
   echo "FAIL: Disk is still full (${DISK_USAGE}% used)."
   echo ""
   echo "Fix the root cause first:"
-  echo "  vagrant ssh"
+  echo "  limactl shell lima-alertmanager"
   echo "  df -h"
-  echo "  sudo rm /var/lib/postgresql/data/fillup.bin"
+  echo "  sudo rm /var/fillfile"
   exit 1
 fi
 
@@ -26,7 +26,7 @@ echo "Disk space looks healthy"
 echo ""
 echo "Checking Alertmanager configuration..."
 
-ALERTMANAGER_CONFIG=$(vagrant ssh -c 'cat /etc/alertmanager/alertmanager.yml 2>/dev/null' || echo "")
+ALERTMANAGER_CONFIG=$(limactl shell lima-alertmanager cat /etc/alertmanager/alertmanager.yml 2>/dev/null || echo "")
 
 if [ -z "$ALERTMANAGER_CONFIG" ]; then
   echo "FAIL: Cannot read Alertmanager config"
@@ -57,7 +57,7 @@ else
   echo "  group_interval: 10s"
   echo "  repeat_interval: 1h"
   echo ""
-  echo "Then reload: vagrant ssh -c 'sudo systemctl reload alertmanager'"
+  echo "Then reload: limactl shell lima-alertmanager sudo systemctl reload alertmanager"
   exit 1
 fi
 
@@ -65,7 +65,7 @@ fi
 echo ""
 echo "Checking for active alerts..."
 
-ACTIVE_ALERTS=$(vagrant ssh -c 'curl -s http://localhost:9093/api/v2/alerts | grep -o "\"status\":\"firing\"" | wc -l' 2>/dev/null || echo "0")
+ACTIVE_ALERTS=$(limactl shell lima-alertmanager curl -s http://localhost:9093/api/v2/alerts 2>/dev/null | grep -o '"status":"firing"' | wc -l || echo "0")
 
 echo "Active firing alerts: $ACTIVE_ALERTS"
 
@@ -77,7 +77,7 @@ if [ "$ACTIVE_ALERTS" -gt 5 ]; then
 fi
 
 # Verify Prometheus is healthy
-PROM_HEALTH=$(vagrant ssh -c 'curl -s http://localhost:9090/-/healthy' 2>/dev/null || echo "fail")
+PROM_HEALTH=$(limactl shell lima-alertmanager curl -s http://localhost:9090/-/healthy 2>/dev/null || echo "fail")
 
 if [ "$PROM_HEALTH" != "Prometheus is Healthy." ]; then
   echo ""
@@ -93,7 +93,7 @@ echo ""
 echo "Key learnings:"
 echo ""
 echo "1. Root Cause vs Symptoms:"
-echo "   - Root: Disk full on database server"
+echo "   - Root: Disk full on server"
 echo "   - Symptoms: DB connection failures, API errors, cache misses"
 echo ""
 echo "2. Alert Design Best Practices:"

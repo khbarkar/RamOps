@@ -1,5 +1,6 @@
-arch: "aarch64"
 images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
   - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
     arch: "aarch64"
 cpus: 2
@@ -18,21 +19,27 @@ provision:
       
       # Install Prometheus
       PROM_VERSION="2.48.0"
-      wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-arm64.tar.gz
-      tar xzf prometheus-${PROM_VERSION}.linux-arm64.tar.gz
-      cp prometheus-${PROM_VERSION}.linux-arm64/prometheus /usr/local/bin/
-      cp prometheus-${PROM_VERSION}.linux-arm64/promtool /usr/local/bin/
+      ARCH=$(uname -m)
+      if [ "$ARCH" = "aarch64" ]; then
+        PROM_ARCH="arm64"
+      else
+        PROM_ARCH="amd64"
+      fi
+      wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-${PROM_ARCH}.tar.gz
+      tar xzf prometheus-${PROM_VERSION}.linux-${PROM_ARCH}.tar.gz
+      cp prometheus-${PROM_VERSION}.linux-${PROM_ARCH}/prometheus /usr/local/bin/
+      cp prometheus-${PROM_VERSION}.linux-${PROM_ARCH}/promtool /usr/local/bin/
       mkdir -p /etc/prometheus /var/lib/prometheus
-      rm -rf prometheus-${PROM_VERSION}.linux-arm64*
+      rm -rf prometheus-${PROM_VERSION}.linux-${PROM_ARCH}*
       
       # Install Alertmanager
       AM_VERSION="0.26.0"
-      wget -q https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-arm64.tar.gz
-      tar xzf alertmanager-${AM_VERSION}.linux-arm64.tar.gz
-      cp alertmanager-${AM_VERSION}.linux-arm64/alertmanager /usr/local/bin/
-      cp alertmanager-${AM_VERSION}.linux-arm64/amtool /usr/local/bin/
+      wget -q https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-${PROM_ARCH}.tar.gz
+      tar xzf alertmanager-${AM_VERSION}.linux-${PROM_ARCH}.tar.gz
+      cp alertmanager-${AM_VERSION}.linux-${PROM_ARCH}/alertmanager /usr/local/bin/
+      cp alertmanager-${AM_VERSION}.linux-${PROM_ARCH}/amtool /usr/local/bin/
       mkdir -p /etc/alertmanager /var/lib/alertmanager
-      rm -rf alertmanager-${AM_VERSION}.linux-arm64*
+      rm -rf alertmanager-${AM_VERSION}.linux-${PROM_ARCH}*
       
       # Configure Prometheus with alert rules
       cat > /etc/prometheus/prometheus.yml << 'PROMEOF'
@@ -63,95 +70,264 @@ provision:
         - name: infrastructure
           interval: 5s
           rules:
-            # Root cause alert - fires when disk has less than 3GB free
-            - alert: DatabaseDiskFull
+            # ROOT CAUSE - Disk full
+            - alert: DiskSpaceCritical
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 10s
               labels:
                 severity: critical
-                component: database
-                type: root_cause
+                component: infrastructure
+                layer: root_cause
+                team: platform
               annotations:
-                summary: "Database disk is full"
+                summary: "Disk space critically low on {{ $labels.instance }}"
+                description: "Available disk space is {{ $value | humanize }}B"
             
-            # Symptom alerts (cascade from disk full)
-            - alert: DatabaseConnectionFailed
+            # LAYER 1 - Direct database impacts
+            - alert: DatabaseWritesFailing
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
-              for: 5s
+              for: 8s
               labels:
                 severity: critical
                 component: database
-                type: symptom
+                layer: direct_impact
+                team: database
               annotations:
-                summary: "Cannot connect to database"
+                summary: "Database cannot write to disk"
+                description: "PostgreSQL write operations failing"
             
-            - alert: APILatencyHigh
+            - alert: DatabaseTransactionLogFull
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 8s
+              labels:
+                severity: critical
+                component: database
+                layer: direct_impact
+                team: database
+              annotations:
+                summary: "Database transaction log cannot grow"
+            
+            - alert: DatabaseConnectionPoolExhausted
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 7s
+              labels:
+                severity: critical
+                component: database
+                layer: direct_impact
+                team: database
+              annotations:
+                summary: "All database connections in use"
+            
+            # LAYER 2 - Application layer failures
+            - alert: APIHealthCheckFailing
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 6s
+              labels:
+                severity: critical
+                component: api
+                layer: application
+                team: backend
+              annotations:
+                summary: "API health check endpoint returning 503"
+            
+            - alert: APIErrorRate5xx
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 6s
+              labels:
+                severity: critical
+                component: api
+                layer: application
+                team: backend
+              annotations:
+                summary: "API 5xx error rate at 67%"
+            
+            - alert: APILatencyP99High
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
               labels:
                 severity: warning
                 component: api
-                type: symptom
+                layer: application
+                team: backend
               annotations:
-                summary: "API response time > 5s"
+                summary: "API P99 latency > 8000ms"
             
-            - alert: CacheMissRateHigh
+            - alert: APILatencyP95High
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: api
+                layer: application
+                team: backend
+              annotations:
+                summary: "API P95 latency > 5000ms"
+            
+            - alert: AuthServiceDown
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 6s
+              labels:
+                severity: critical
+                component: auth
+                layer: application
+                team: security
+              annotations:
+                summary: "Authentication service unavailable"
+            
+            - alert: SessionStoreUnavailable
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 6s
+              labels:
+                severity: critical
+                component: sessions
+                layer: application
+                team: backend
+              annotations:
+                summary: "Session store cannot be reached"
+            
+            # LAYER 3 - Cache and queue impacts
+            - alert: RedisCacheMissRateHigh
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
               labels:
                 severity: warning
                 component: cache
-                type: symptom
+                layer: supporting_services
+                team: platform
               annotations:
-                summary: "Cache miss rate elevated to 95%"
+                summary: "Redis cache miss rate at 94%"
             
-            - alert: QueueBacklogGrowing
+            - alert: CacheEvictionRateHigh
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: cache
+                layer: supporting_services
+                team: platform
+              annotations:
+                summary: "Cache eviction rate abnormally high"
+            
+            - alert: MessageQueueBacklog
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
               labels:
                 severity: warning
                 component: queue
-                type: symptom
+                layer: supporting_services
+                team: platform
               annotations:
-                summary: "Message queue backlog growing"
+                summary: "Message queue backlog growing: 15,000 messages"
             
-            - alert: ErrorRateSpike
+            - alert: MessageQueueConsumerLag
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
+              labels:
+                severity: warning
+                component: queue
+                layer: supporting_services
+                team: platform
+              annotations:
+                summary: "Queue consumer lag increasing"
+            
+            # LAYER 4 - User-facing impacts
+            - alert: UserLoginFailureSpike
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 4s
               labels:
                 severity: critical
-                component: api
-                type: symptom
+                component: frontend
+                layer: user_impact
+                team: frontend
               annotations:
-                summary: "Error rate spiked to 45%"
+                summary: "User login failure rate at 89%"
             
-            - alert: MemoryPressure
+            - alert: CheckoutProcessFailing
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 4s
+              labels:
+                severity: critical
+                component: checkout
+                layer: user_impact
+                team: payments
+              annotations:
+                summary: "Checkout process failing for users"
+            
+            - alert: PageLoadTimeoutRate
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 4s
+              labels:
+                severity: warning
+                component: frontend
+                layer: user_impact
+                team: frontend
+              annotations:
+                summary: "Page load timeout rate at 45%"
+            
+            # LAYER 5 - Resource exhaustion symptoms
+            - alert: ApplicationMemoryHigh
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
               labels:
                 severity: warning
                 component: app
-                type: symptom
+                layer: resources
+                team: platform
               annotations:
-                summary: "Application memory usage high"
+                summary: "Application memory usage at 92%"
             
-            - alert: CPUThrottling
+            - alert: CPUUsageHigh
               expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
               for: 5s
               labels:
                 severity: warning
                 component: app
-                type: symptom
+                layer: resources
+                team: platform
               annotations:
-                summary: "CPU throttling detected"
+                summary: "CPU usage sustained above 85%"
+            
+            - alert: ThreadPoolExhausted
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 5s
+              labels:
+                severity: warning
+                component: app
+                layer: resources
+                team: backend
+              annotations:
+                summary: "Application thread pool at capacity"
+            
+            # LAYER 6 - Monitoring and logging impacts
+            - alert: LogShippingFailing
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 4s
+              labels:
+                severity: warning
+                component: logging
+                layer: observability
+                team: platform
+              annotations:
+                summary: "Cannot ship logs to aggregator"
+            
+            - alert: MetricsCollectionDelayed
+              expr: node_filesystem_avail_bytes{mountpoint="/"} < 3000000000
+              for: 4s
+              labels:
+                severity: warning
+                component: metrics
+                layer: observability
+                team: platform
+              annotations:
+                summary: "Metrics collection falling behind"
       RULEEOF
       
       # Install and configure node_exporter for filesystem metrics
       NODE_EXP_VERSION="1.7.0"
-      wget -q https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXP_VERSION}/node_exporter-${NODE_EXP_VERSION}.linux-arm64.tar.gz
-      tar xzf node_exporter-${NODE_EXP_VERSION}.linux-arm64.tar.gz
-      cp node_exporter-${NODE_EXP_VERSION}.linux-arm64/node_exporter /usr/local/bin/
-      rm -rf node_exporter-${NODE_EXP_VERSION}.linux-arm64*
+      wget -q https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXP_VERSION}/node_exporter-${NODE_EXP_VERSION}.linux-${PROM_ARCH}.tar.gz
+      tar xzf node_exporter-${NODE_EXP_VERSION}.linux-${PROM_ARCH}.tar.gz
+      cp node_exporter-${NODE_EXP_VERSION}.linux-${PROM_ARCH}/node_exporter /usr/local/bin/
+      rm -rf node_exporter-${NODE_EXP_VERSION}.linux-${PROM_ARCH}*
       
       cat > /etc/systemd/system/node_exporter.service << 'NODEEOF'
       [Unit]
