@@ -43,6 +43,16 @@ Once done press any key and select `Teardown`.
 
 See [Github pages](https://khbarkar.github.io/RamOps/) for details
 
+## Releases
+
+Releases are created automatically from pushes to `main` using semantic versioning and Conventional Commits.
+
+- `fix:` creates a patch release (`v1.0.1`)
+- `feat:` creates a minor release (`v1.1.0`)
+- `feat!:` or any commit with a `BREAKING CHANGE:` footer creates a major release (`v2.0.0`)
+
+Commits that do not match Conventional Commit release types do not create a new tag or GitHub release.
+
 ## Getting Started
 
 Each scenario is self-contained with its own setup, verification, and teardown scripts.
@@ -68,4 +78,3 @@ cd kubernetes/incident-001
 <p align="center">
   <sub>If you find this project helpful, consider <a href="https://www.buymeacoffee.com/khbarkar">buying me a coffee</a> ☕</sub>
 </p>
-
